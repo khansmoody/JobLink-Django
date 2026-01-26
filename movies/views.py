@@ -2,6 +2,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import Movie, Review
 from django.contrib.auth.decorators import login_required
 
+def report_review(request, review_id):
+    review = get_object_or_404(Review, id=review_id)
+    review.is_reported = True
+    review.save()
+    return redirect('movies.show', id=review.movie.id)
+
 @login_required
 def edit_review(request, id, review_id):
     review = get_object_or_404(Review, id=review_id)
@@ -34,7 +40,7 @@ def index(request):
 
 def show(request, id):
     movie = Movie.objects.get(id=id)
-    reviews = Review.objects.filter(movie=movie)
+    reviews = Review.objects.filter(movie=movie, is_reported=False)
     template_data = {}
     template_data['title'] = movie.name
     template_data['movie'] = movie
