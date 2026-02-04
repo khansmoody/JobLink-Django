@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth import login as auth_login, authenticate, logout as auth_logout
 from .forms import CustomUserCreationForm, CustomErrorList
 from django.contrib.auth.decorators import login_required
@@ -31,7 +31,7 @@ def login(request):
         # If you want to send it to a different page for each role here, you can add the code as below
         # if user.role == 'recruiter':
             #     return redirect('recruiter_dashboard')
-            
+
             return redirect('home.index')
 
 
@@ -42,6 +42,7 @@ def signup(request):
         template_data['form'] = CustomUserCreationForm()
         return render(request, 'accounts/signup.html', {'template_data': template_data})
     elif request.method == 'POST':
+
         form = CustomUserCreationForm(request.POST, error_class=CustomErrorList)
         if form.is_valid():
             form.save()
