@@ -116,3 +116,13 @@ class ExternalLinkForm(forms.ModelForm):
             'label': forms.TextInput(attrs={'class': 'form-control'}),
             'url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://'}),
         }
+
+# Added 'formsets' which allow users to add/edit/delete multiple items at once
+# Users can add multiple schools, edit existing ones, or delete them which should be done all on one page
+EducationFormSet = inlineformset_factory(JobSeekerProfile,Education,form=EducationForm,extra=1,can_delete=True)
+
+# Managing multiple work experience
+ExperienceFormSet = inlineformset_factory(JobSeekerProfile, Experience, form=ExperienceForm, extra=1,can_delete=True)
+
+# Managing multiple external links
+ExternalLinkFormSet = inlineformset_factory(JobSeekerProfile, ExternalLink, form=ExternalLinkForm, extra=1,can_delete=True)
