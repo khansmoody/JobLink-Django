@@ -105,7 +105,6 @@ class Education(models.Model):
     def __str__(self):
         return self.school_name
 
-
 # Creates a database table for storing work experience
 class Experience(models.Model):
     profile = models.ForeignKey(
@@ -135,7 +134,6 @@ class Experience(models.Model):
     
     def __str__(self):
         return f"{self.title} @ {self.company_name}"
-
 
 # Creates a database table for storing external links like a portfolio, GitHub, or etc.
 class ExternalLink(models.Model):
