@@ -64,3 +64,91 @@ class JobSeekerProfile(models.Model):
 
     def __str__(self):
         return f"{self.user.username} Profile"
+
+# Creates database table for storing skills
+# Links these skills to the jobseeker profile
+class Skill(models.Model):
+    profile = models.ForeignKey(
+        JobSeekerProfile,
+        on_delete=models.CASCADE,
+        related_name='skills'
+    )
+    name = models.CharField(max_length=50)
+    class Meta:
+        ordering = ['name'] # helps order by name so should order it alphabetically
+    def __str__(self):
+        return self.name
+
+# Creates a database table for storing education info
+# Links this to the jobseeker profile
+class Education(models.Model):
+    """Education entries."""
+    profile = models.ForeignKey(
+        JobSeekerProfile, 
+        on_delete=models.CASCADE,
+        related_name='education_items'
+    )
+    school_name = models.CharField(max_length=160)
+    degree = models.CharField(max_length=120, blank=True)
+    field_of_study = models.CharField(max_length=120, blank=True)
+    start_date = models.DateField(blank=True, null=True)
+    end_date = models.DateField(blank=True, null=True)
+    description = models.TextField(blank=True)
+    class Meta:
+        ordering = ['-end_date', '-start_date', '-id'] # sorts by most recent
+    
+    # Helps checks if the data makes sense before saving, for instance makes sure start date comes before end date
+    def clean(self):
+        if self.start_date and self.end_date and self.start_date > self.end_date:
+            raise ValidationError("Education start date must be before or equal to end date.")
+    
+    def __str__(self):
+        return self.school_name
+
+
+# Creates a database table for storing work experience
+class Experience(models.Model):
+    profile = models.ForeignKey(
+        JobSeekerProfile, 
+        on_delete=models.CASCADE, 
+        related_name='experience_items'
+    )
+    company_name = models.CharField(max_length=160)
+    title = models.CharField(max_length=120)
+    employment_type = models.CharField(max_length=80, blank=True)
+    location = models.CharField(max_length=120, blank=True)
+    start_date = models.DateField()
+    end_date = models.DateField(blank=True, null=True)
+    is_current = models.BooleanField(default=False)
+    description = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-is_current', '-end_date', '-start_date', '-id']
+    
+    # Similar to clean() function above just checking data makes sense
+    def clean(self):
+        if self.is_current and self.end_date is not None:
+            raise ValidationError("Current role cannot have an end date.")
+
+        if self.end_date and self.start_date > self.end_date:
+            raise ValidationError("Experience start date must be before or equal to end date.")
+    
+    def __str__(self):
+        return f"{self.title} @ {self.company_name}"
+
+
+# Creates a database table for storing external links like a portfolio, GitHub, or etc.
+class ExternalLink(models.Model):
+    profile = models.ForeignKey(
+        JobSeekerProfile, 
+        on_delete=models.CASCADE, 
+        related_name='links'
+    )
+    label = models.CharField(max_length=80)
+    url = models.URLField(max_length=300)
+    
+    class Meta:
+        ordering = ['id']
+
+    def __str__(self):
+        return self.label
