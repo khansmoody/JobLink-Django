@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container my-4">
+  <div class="card shadow-sm border-0">
+    <div class="card-body">
+      <h3 class="mb-3">Edit Profile</h3>
+
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <h5>Basic Info</h5>
+        {{ template_data.profile_form.as_p }}
+
+        <h5 class="mt-4">Skills</h5>
+        {{ template_data.skills_form.as_p }}
+
+        <h5 class="mt-4">Education</h5>
+        {{ template_data.edu_formset.management_form }}
+        {% for form in template_data.edu_formset %}
+          <div class="border rounded p-3 mb-2">{{ form.as_p }}</div>
+        {% endfor %}
+
+        <h5 class="mt-4">Experience</h5>
+        {{ template_data.exp_formset.management_form }}
+        {% for form in template_data.exp_formset %}
+          <div class="border rounded p-3 mb-2">{{ form.as_p }}</div>
+        {% endfor %}
+
+        <h5 class="mt-4">Links</h5>
+        {{ template_data.link_formset.management_form }}
+        {% for form in template_data.link_formset %}
+          <div class="border rounded p-3 mb-2">{{ form.as_p }}</div>
+        {% endfor %}
+
+        <div class="mt-4 d-flex gap-2">
+          <button type="submit" class="btn text-white" style="background:#003057;">Save</button>
+          <a href="{% url 'accounts.profile_me' %}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
