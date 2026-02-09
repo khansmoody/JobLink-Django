@@ -39,9 +39,25 @@
             
             {% if user.is_authenticated %}
               {% if user.role == 'job_seeker' %}
-                <a class="nav-link" href="{% url 'accounts.profile_me' %}"> My Profile</a>
-                <a class="nav-link" href="#">Find Jobs</a>
-                <a class="nav-link" href="#">My Applications</a>
+                <!--User Story 1-->
+                <div class="nav-item dropdown ms-2">
+                  <a class="nav-link dropdown-toggle p-0 d-flex align-items-center" href="#" id="profileDropdown"
+                     role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    {% if user.profile and user.profile.profile_photo %}
+                      <img src="{{ user.profile.profile_photo.url }}" alt="Profile"
+                           style="width:36px;height:36px;object-fit:cover;border-radius:50%;border:2px solid #B3A369;">
+                    {% else %}
+                      <div style="width:36px;height:36px;border-radius:50%;background:#B3A369;color:#fff;
+                            display:flex;align-items:center;justify-content:center;font-weight:600;border:2px solid #EAAA00;">
+                        {{ user.username|first|upper }}
+                      </div>
+                    {% endif %}
+                  </a>
+                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                    <li><a class="dropdown-item" href="{% url 'accounts.profile_me' %}">View Profile</a></li>
+                    <li><a class="dropdown-item" href="{% url 'accounts.profile_edit' %}">Edit Profile</a></li>
+                  </ul>
+                </div>
               
               {% elif user.role == 'recruiter' %}
                 <a class="nav-link" href="#">Post a Job</a>
