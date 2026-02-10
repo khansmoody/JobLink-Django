@@ -7,9 +7,13 @@ from django.forms import inlineformset_factory
 
 class CustomErrorList(ErrorList):
     def __str__(self):
+        return self.as_divs()
+
+    def as_divs(self):
         if not self:
-            return ''
-        return mark_safe(''.join([f'<div class="alert alert-danger" role="alert">{e}</div>' for e in self]))
+            return ""
+        items = "".join(f"<li>{e}</li>" for e in self)
+        return mark_safe(f'<div class="alert alert-danger py-2 mb-2"><ul class="mb-0">{items}</ul></div>')
 
 class CustomUserCreationForm(UserCreationForm):
     class Meta:
@@ -32,97 +36,215 @@ class CustomUserCreationForm(UserCreationForm):
             self.fields[fieldname].help_text = None
             self.fields[fieldname].widget.attrs.update({'class': 'form-control'})
 
+def apply_bootstrap_classes(form):
+    for _, field in form.fields.items():
+        widget = field.widget
+        existing = widget.attrs.get("class", "")
+        if isinstance(widget, forms.CheckboxInput):
+            widget.attrs["class"] = (existing + " form-check-input").strip()
+        else:
+            widget.attrs["class"] = (existing + " form-control").strip()
+
+
+class BootstrapErrorMixin:
+    def _html_output(self, *args, **kwargs):
+        output = super()._html_output(*args, **kwargs)
+        output = output.replace(
+            '<ul class="errorlist nonfield">',
+            '<div class="alert alert-danger py-2 mb-2"><ul class="mb-0">'
+        ).replace(
+            '<ul class="errorlist">',
+            '<div class="alert alert-danger py-2 mb-2"><ul class="mb-0">'
+        ).replace('</ul>', '</ul></div>')
+        return mark_safe(output)
+
+
+class SignUpForm(BootstrapErrorMixin, UserCreationForm):
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name', 'email', 'role', 'phone_number', 'password1', 'password2']
+        help_texts = {'username': '', 'password1': '', 'password2': ''}
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("error_class", CustomErrorList)
+        super().__init__(*args, **kwargs)
+        if hasattr(User, "ROLE_CHOICES") and "role" in self.fields:
+            self.fields["role"].choices = [c for c in User.ROLE_CHOICES if c[0] != "admin"]
+        apply_bootstrap_classes(self)
+
 # User Story 1
 # Web form for letting users input data
-class JobSeekerProfileForm(forms.ModelForm):
+class JobSeekerProfileForm(BootstrapErrorMixin, forms.ModelForm):
     class Meta:
         model = JobSeekerProfile
-        fields = ['headline', 'location', 'about', 'profile_photo', 'banner_image']
+        fields = [
+            'headline', 'location', 'about',
+            'contact_email', 'contact_phone', 'website', 'city_state',
+            'profile_photo', 'banner_image'
+        ]
         widgets = {
-            'headline': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 220}),
-            'location': forms.TextInput(attrs={'class': 'form-control'}),
-            'about': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'headline': forms.TextInput(attrs={'maxlength': 220, 'placeholder': 'e.g., Software Engineer looking for Summer 2026 internship'}),
+            'location': forms.TextInput(attrs={'placeholder': 'e.g., Atlanta, GA'}),
+            'about': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Short professional summary'}),
+            'contact_email': forms.EmailInput(attrs={'placeholder': 'you@example.com'}),
+            'contact_phone': forms.TextInput(attrs={'placeholder': '+1 123 456 7890'}),
+            'website': forms.URLInput(attrs={'placeholder': 'https://yourportfolio.com'}),
+            'city_state': forms.TextInput(attrs={'placeholder': 'e.g., Atlanta, GA'}),
         }
-    
-    # Clean up function similar to the one in accounts/models.py
-    def clean_headline(self):
-        headline = self.cleaned_data['headline'].strip()
-        if not (1 <= len(headline) <= 220):
-            raise forms.ValidationError("Headline must be between 1 and 220 characters.")
-        return headline
-
-
-# Creates a form for editing skills
-class SkillsCSVForm(forms.Form):
-    skills_csv = forms.CharField(
+    first_name = forms.CharField(
         required=False,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Python, Adobe Photoshop, Java, Data Advertising'
-        })
+        max_length=150,
+        label="First legal name",
+        widget=forms.TextInput(attrs={"placeholder": "e.g., George"})
+    )
+    last_name = forms.CharField(
+        required=False,
+        max_length=150,
+        label="Last legal name",
+        widget=forms.TextInput(attrs={"placeholder": "e.g., Burdell"})
     )
 
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("error_class", CustomErrorList)
+        super().__init__(*args, **kwargs)
+
+        if self.instance and self.instance.user_id:
+            self.fields["first_name"].initial = self.instance.user.first_name
+            self.fields["last_name"].initial = self.instance.user.last_name
+
+        apply_bootstrap_classes(self)
+
+    # Clean up function similar to the one in accounts/models.py
+    def clean_headline(self):
+        headline = (self.cleaned_data.get('headline') or '').strip()
+        if not headline:
+            raise forms.ValidationError("Headline is required.")
+        if len(headline) > 220:
+            raise forms.ValidationError("Headline must be 220 characters or fewer.")
+        return headline
+
+    def clean_website(self):
+        website = (self.cleaned_data.get('website') or '').strip()
+        if website and not (website.startswith('http://') or website.startswith('https://')):
+            raise forms.ValidationError("Website URL must start with http:// or https://")
+        return website
+
+# Creates a form for editing skills
+class SkillsCSVForm(BootstrapErrorMixin, forms.Form):
+    skills_csv = forms.CharField(
+        required=False,
+        label='Skills',
+        widget=forms.TextInput(attrs={'placeholder': 'Python, Adobe Photoshop, Java, Data Advertising'})
+    )
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("error_class", CustomErrorList)
+        super().__init__(*args, **kwargs)
+        apply_bootstrap_classes(self)
+
     def clean_skills_csv(self):
-        raw = self.cleaned_data.get('skills_csv', '')
+        raw = (self.cleaned_data.get('skills_csv') or '').strip()
+        if not raw:
+            return []
         parts = [p.strip() for p in raw.split(',') if p.strip()]
-        seen = set()
         deduped = []
-        for p in parts:
-            if len(p) > 50: # make sure not too long
-                raise forms.ValidationError("Each skill must be <= 50 characters.")
-            key = p.lower()
+        seen = set()
+        for idx, skill in enumerate(parts, start=1):
+            if len(skill) > 50: # make sure not too long
+                raise forms.ValidationError(f"Skill #{idx} is too long. Max 50 chars.")
+            key = skill.lower()
             if key not in seen: # make sure no dupes
                 seen.add(key)
-                deduped.append(p)
+                deduped.append(skill)
         return deduped
 
-
 # Creates a web form for adding/editing education
-class EducationForm(forms.ModelForm):
+class EducationForm(BootstrapErrorMixin, forms.ModelForm):
     class Meta:
         model = Education
         exclude = ['profile']
         widgets = {
-            'school_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'degree': forms.TextInput(attrs={'class': 'form-control'}),
-            'field_of_study': forms.TextInput(attrs={'class': 'form-control'}),
-            'start_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'end_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'school_name': forms.TextInput(attrs={'placeholder': 'e.g., Georgia Tech'}),
+            'degree': forms.TextInput(attrs={'placeholder': 'e.g., B.S. or Bachelors'}),
+            'field_of_study': forms.TextInput(attrs={'placeholder': 'e.g., Computer Science'}),
+            'start_date': forms.DateInput(attrs={'type': 'date'}),
+            'end_date': forms.DateInput(attrs={'type': 'date'}),
+            'description': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Achievements, coursework, etc.'}),
         }
 
-class ExperienceForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("error_class", CustomErrorList)
+        super().__init__(*args, **kwargs)
+        apply_bootstrap_classes(self)
+
+    def clean(self):
+        cleaned = super().clean()
+        start = cleaned.get("start_date")
+        end = cleaned.get("end_date")
+        if start and end and start > end:
+            self.add_error("end_date", "End date must be after start date.")
+        return cleaned
+
+class ExperienceForm(BootstrapErrorMixin, forms.ModelForm):
     class Meta:
         model = Experience
         exclude = ['profile']
         widgets = {
-            'company_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'title': forms.TextInput(attrs={'class': 'form-control'}),
-            'employment_type': forms.TextInput(attrs={'class': 'form-control'}),
-            'location': forms.TextInput(attrs={'class': 'form-control'}),
-            'start_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'end_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'is_current': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'company_name': forms.TextInput(attrs={'placeholder': 'e.g., Microsoft'}),
+            'title': forms.TextInput(attrs={'placeholder': 'e.g., Software Engineer Intern'}),
+            'employment_type': forms.TextInput(attrs={'placeholder': 'e.g., Internship'}),
+            'location': forms.TextInput(attrs={'placeholder': 'e.g., Seattle, WA'}),
+            'start_date': forms.DateInput(attrs={'type': 'date'}),
+            'end_date': forms.DateInput(attrs={'type': 'date'}),
+            'is_current': forms.CheckboxInput(),
+            'description': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Impact, responsibilities, tools'}),
         }
 
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("error_class", CustomErrorList)
+        super().__init__(*args, **kwargs)
+        apply_bootstrap_classes(self)
+
+    def clean(self):
+        cleaned = super().clean()
+        start = cleaned.get("start_date")
+        end = cleaned.get("end_date")
+        is_current = cleaned.get("is_current")
+
+        if is_current and end:
+            self.add_error("end_date", "Leave end date blank for a current role.")
+        if start and end and start > end:
+            self.add_error("end_date", "End date must be after start date.")
+        return cleaned
 
 # Creates a web form for adding/editing links
-class ExternalLinkForm(forms.ModelForm):
+class ExternalLinkForm(BootstrapErrorMixin, forms.ModelForm):
     class Meta:
         model = ExternalLink
         exclude = ['profile']
         widgets = {
-            'label': forms.TextInput(attrs={'class': 'form-control'}),
-            'url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://'}),
+            'label': forms.TextInput(attrs={'placeholder': 'e.g., GitHub'}),
+            'url': forms.URLInput(attrs={'placeholder': 'https://github.com/yourname'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("error_class", CustomErrorList)
+        super().__init__(*args, **kwargs)
+        apply_bootstrap_classes(self)
+
+    def clean_url(self):
+        url = (self.cleaned_data.get("url") or "").strip()
+        if url and not (url.startswith("http://") or url.startswith("https://")):
+            raise forms.ValidationError("URL must start with http:// or https://")
+        return url
 
 # Added 'formsets' which allow users to add/edit/delete multiple items at once
 # Users can add multiple schools, edit existing ones, or delete them which should be done all on one page
-EducationFormSet = inlineformset_factory(JobSeekerProfile,Education,form=EducationForm,extra=1,can_delete=True)
+EducationFormSet = inlineformset_factory(JobSeekerProfile, Education, form=EducationForm, extra=1, can_delete=True)
 
-# Managing multiple work experience
-ExperienceFormSet = inlineformset_factory(JobSeekerProfile, Experience, form=ExperienceForm, extra=1,can_delete=True)
+ExperienceFormSet = inlineformset_factory(JobSeekerProfile, Experience, form=ExperienceForm, extra=1, can_delete=True)
 
-# Managing multiple external links
-ExternalLinkFormSet = inlineformset_factory(JobSeekerProfile, ExternalLink, form=ExternalLinkForm, extra=1,can_delete=True)
+ExternalLinkFormSet = inlineformset_factory(JobSeekerProfile, ExternalLink, form=ExternalLinkForm, extra=1, can_delete=True)
+
+CustomUserCreationForm = SignUpForm
+SignupForm = SignUpForm

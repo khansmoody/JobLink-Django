@@ -1,6 +1,5 @@
 {% extends 'base.html' %}
 {% block content %}
-<!--User Story 1-->
 <div class="container my-4">
 
   <div class="card shadow-sm border-0 mb-4">
@@ -21,12 +20,38 @@
         {% endif %}
       </div>
 
-      <h2 class="mt-3 mb-1">{{ template_data.profile.user.get_full_name|default:template_data.profile.user.username }}</h2>
+      <h2 class="mt-3 mb-1">{{ template_data.profile.display_name }}</h2>
       <p class="mb-1">{{ template_data.profile.headline }}</p>
-      {% if template_data.profile.location %}<p class="text-muted mb-2">{{ template_data.profile.location }}</p>{% endif %}
+      {% if template_data.profile.location %}
+        <p class="text-muted mb-2">{{ template_data.profile.location }}</p>
+      {% endif %}
+
+      <div class="mt-2">
+        <small class="text-muted d-block">Contact</small>
+        {% if template_data.profile.contact_email %}
+          <div>Email: {{ template_data.profile.contact_email }}</div>
+        {% endif %}
+        {% if template_data.profile.contact_phone %}
+          <div>Phone: {{ template_data.profile.contact_phone }}</div>
+        {% endif %}
+        {% if template_data.profile.city_state %}
+          <div>City/State: {{ template_data.profile.city_state }}</div>
+        {% endif %}
+        {% if template_data.profile.website %}
+          <div>
+            Website:
+            <a href="{{ template_data.profile.website }}" target="_blank" rel="noopener noreferrer">
+              {{ template_data.profile.website }}
+            </a>
+          </div>
+        {% endif %}
+        {% if not template_data.profile.contact_email and not template_data.profile.contact_phone and not template_data.profile.city_state and not template_data.profile.website %}
+          <div class="text-muted">No contact information added yet.</div>
+        {% endif %}
+      </div>
 
       {% if template_data.is_owner %}
-        <a href="{% url 'accounts.profile_edit' %}" class="btn text-white" style="background:#003057;">Edit profile</a>
+        <a href="{% url 'accounts.profile_edit' %}" class="btn text-white mt-3" style="background:#003057;">Edit profile</a>
       {% endif %}
     </div>
   </div>
@@ -40,7 +65,7 @@
     <h5>Skills</h5>
     <div class="d-flex flex-wrap gap-2">
       {% for s in template_data.profile.skills.all %}
-        <span class="badge rounded-pill" style="background:#B3A369; color:#fff;">{{ s.name }}</span>
+        <span class="badge rounded-pill" style="background:#EAAA00; color:#fff;">{{ s.name }}</span>
       {% empty %}
         <p class="mb-0">No skills added yet.</p>
       {% endfor %}

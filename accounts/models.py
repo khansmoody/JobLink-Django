@@ -21,7 +21,7 @@ class User(AbstractUser):
 # Function that checks if an uploaded image is too big; for profile image and banner similar to LinkedIn
 def validate_image_size(image, max_mb):
     if image and image.size > max_mb * 1024 * 1024:
-        raise ValidationError(f"Image is too large. Max allowed size is {max_mb}MB.")
+        raise ValidationError(f"Image is too large. Maximum allowed is {max_mb}MB.")
 
 # Function checks if a profile picture (avatar) is too big
 def validate_avatar(image):
@@ -43,7 +43,11 @@ class JobSeekerProfile(models.Model):
     headline = models.CharField(max_length=220)
     location = models.CharField(max_length=120, blank=True)
     about = models.TextField(blank=True)
-    
+    # Contact info fields
+    contact_email = models.EmailField(blank=True)
+    contact_phone = models.CharField(max_length=25, blank=True)
+    website = models.URLField(blank=True)
+    city_state = models.CharField(max_length=120, blank=True)
     # Profile picture here
     profile_photo = models.ImageField(
         upload_to='profiles/avatars/',
@@ -62,8 +66,13 @@ class JobSeekerProfile(models.Model):
     created_at = models.DateTimeField(auto_now_add=True) # auto records when this profile was first created
     updated_at = models.DateTimeField(auto_now=True) # same thing auto records last updated
 
+    # Returns user's full name or username
+    def display_name(self):
+        full = f"{self.user.first_name} {self.user.last_name}".strip()
+        return full if full else self.user.username
+
     def __str__(self):
-        return f"{self.user.username} Profile"
+        return f"Profile({self.display_name()})"
 
 # Creates database table for storing skills
 # Links these skills to the jobseeker profile
@@ -82,7 +91,6 @@ class Skill(models.Model):
 # Creates a database table for storing education info
 # Links this to the jobseeker profile
 class Education(models.Model):
-    """Education entries."""
     profile = models.ForeignKey(
         JobSeekerProfile, 
         on_delete=models.CASCADE,
