@@ -1,0 +1,22 @@
+<h1> Conversation with {{ other_user.username }}</h1>
+
+<div style="border:1px solid #ccc; padding:12px; max-width:700px;">
+    {% for m in conversation %}
+        <div style="margin-bottom:10px;">
+            <strong>
+                {% if m.sender_id == request.user.id %} You {% else %}{{ other_user.username }}{% endif %}
+            </strong>
+        </div>
+    {% empty %}
+        <p> No messages yet. Say hi!</p>
+    {% endfor %}
+</div>
+
+<h3> Send a message</h3>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Send</button>
+</form>
+
+<p><a href="{% url 'messaging:inbox' %}"> Back to inbox</a></p>
