@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container my-4">
+  <div class="card shadow-sm border-0">
+    <div class="card-body">
+      <h3 class="mb-3">Edit Profile</h3>
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %} mb-3">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+
+        {% if template_data.profile_form.errors or template_data.skills_form.errors or template_data.edu_formset.errors or template_data.exp_formset.errors or template_data.link_formset.errors %}
+          <div class="alert alert-danger mb-3">
+            Please fix the highlighted fields below.
+          </div>
+        {% endif %}
+
+        <h5>Full Legal Name</h5>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label" for="{{ template_data.profile_form.first_name.id_for_label }}">
+              {{ template_data.profile_form.first_name.label }}
+            </label>
+            {{ template_data.profile_form.first_name }}
+            {% if template_data.profile_form.first_name.errors %}
+              <div class="alert alert-danger py-2 mt-2 mb-0">
+                {% for err in template_data.profile_form.first_name.errors %}<div>{{ err }}</div>{% endfor %}
+              </div>
+            {% endif %}
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label" for="{{ template_data.profile_form.last_name.id_for_label }}">
+              {{ template_data.profile_form.last_name.label }}
+            </label>
+            {{ template_data.profile_form.last_name }}
+            {% if template_data.profile_form.last_name.errors %}
+              <div class="alert alert-danger py-2 mt-2 mb-0">
+                {% for err in template_data.profile_form.last_name.errors %}<div>{{ err }}</div>{% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Basic Info -->
+        <h5>Basic Info</h5>
+        {% if template_data.profile_form.non_field_errors %}
+          <div class="alert alert-danger py-2">{{ template_data.profile_form.non_field_errors }}</div>
+        {% endif %}
+
+        {% for field in template_data.profile_form %}
+          {% if field.name != 'first_name' and field.name != 'last_name' %}
+            <div class="mb-3">
+              <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {% if field.errors %}
+                <div class="alert alert-danger py-2 mt-2 mb-0">
+                  {% for err in field.errors %}<div>{{ err }}</div>{% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endif %}
+        {% endfor %}
+
+        <!-- Skills -->
+        <h5 class="mt-4">Skills</h5>
+        {% for field in template_data.skills_form %}
+          <div class="mb-3">
+            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+              <div class="alert alert-danger py-2 mt-2 mb-0">
+                {% for err in field.errors %}<div>{{ err }}</div>{% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+
+        <!-- Education -->
+        <h5 class="mt-4">Education</h5>
+        {{ template_data.edu_formset.management_form }}
+        {% if template_data.edu_formset.non_form_errors %}
+          <div class="alert alert-danger py-2">{{ template_data.edu_formset.non_form_errors }}</div>
+        {% endif %}
+
+        <div id="edu-forms">
+          {% for form in template_data.edu_formset %}
+            <div class="border rounded p-3 mb-2 edu-form">
+              {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+
+              {% if form.non_field_errors %}
+                <div class="alert alert-danger py-2">{{ form.non_field_errors }}</div>
+              {% endif %}
+
+              {% for field in form.visible_fields %}
+                {% if field.name != 'DELETE' %}
+                  <div class="mb-2">
+                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                      <div class="alert alert-danger py-2 mt-2 mb-0">
+                        {% for err in field.errors %}<div>{{ err }}</div>{% endfor %}
+                      </div>
+                    {% endif %}
+                  </div>
+                {% else %}
+                  <div class="d-none">{{ field }}</div>
+                {% endif %}
+              {% endfor %}
+
+              <button type="button" class="btn btn-outline-danger btn-sm remove-form-btn">Delete</button>
+            </div>
+          {% endfor %}
+        </div>
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="add-edu">Add Another</button>
+
+        <!-- Experience -->
+        <h5 class="mt-4">Experience</h5>
+        {{ template_data.exp_formset.management_form }}
+        {% if template_data.exp_formset.non_form_errors %}
+          <div class="alert alert-danger py-2">{{ template_data.exp_formset.non_form_errors }}</div>
+        {% endif %}
+
+        <div id="exp-forms">
+          {% for form in template_data.exp_formset %}
+            <div class="border rounded p-3 mb-2 exp-form">
+              {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+
+              {% if form.non_field_errors %}
+                <div class="alert alert-danger py-2">{{ form.non_field_errors }}</div>
+              {% endif %}
+
+              {% for field in form.visible_fields %}
+                {% if field.name != 'DELETE' %}
+                  <div class="mb-2">
+                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                      <div class="alert alert-danger py-2 mt-2 mb-0">
+                        {% for err in field.errors %}<div>{{ err }}</div>{% endfor %}
+                      </div>
+                    {% endif %}
+                  </div>
+                {% else %}
+                  <div class="d-none">{{ field }}</div>
+                {% endif %}
+              {% endfor %}
+
+              <button type="button" class="btn btn-outline-danger btn-sm remove-form-btn">Delete</button>
+            </div>
+          {% endfor %}
+        </div>
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="add-exp">Add Another</button>
+
+        <!-- Links -->
+        <h5 class="mt-4">Links</h5>
+        {{ template_data.link_formset.management_form }}
+        {% if template_data.link_formset.non_form_errors %}
+          <div class="alert alert-danger py-2">{{ template_data.link_formset.non_form_errors }}</div>
+        {% endif %}
+
+        <div id="lnk-forms">
+          {% for form in template_data.link_formset %}
+            <div class="border rounded p-3 mb-2 lnk-form">
+              {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+
+              {% if form.non_field_errors %}
+                <div class="alert alert-danger py-2">{{ form.non_field_errors }}</div>
+              {% endif %}
+
+              {% for field in form.visible_fields %}
+                {% if field.name != 'DELETE' %}
+                  <div class="mb-2">
+                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                      <div class="alert alert-danger py-2 mt-2 mb-0">
+                        {% for err in field.errors %}<div>{{ err }}</div>{% endfor %}
+                      </div>
+                    {% endif %}
+                  </div>
+                {% else %}
+                  <div class="d-none">{{ field }}</div>
+                {% endif %}
+              {% endfor %}
+
+              <button type="button" class="btn btn-outline-danger btn-sm remove-form-btn">Delete</button>
+            </div>
+          {% endfor %}
+        </div>
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="add-lnk">Add Another</button>
+
+        <div class="mt-4 d-flex gap-2">
+          <button type="submit" class="btn text-white" style="background:#003057;">Save</button>
+          <a href="{% url 'accounts.profile_me' %}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<!--If the Jobseeker wants to add another experience, education, etc.-->
+<script>
+  function addAnotherForm(prefix, containerId, formClass) {
+    const totalFormsInput = document.getElementById(`id_${prefix}-TOTAL_FORMS`);
+    const container = document.getElementById(containerId);
+    const forms = container.getElementsByClassName(formClass);
+    if (!totalFormsInput || forms.length === 0) return;
+
+    const formCount = parseInt(totalFormsInput.value, 10);
+    const lastForm = forms[forms.length - 1];
+    const newForm = lastForm.cloneNode(true);
+
+    const regex = new RegExp(`${prefix}-(\\d+)-`, 'g');
+    newForm.innerHTML = newForm.innerHTML.replace(regex, `${prefix}-${formCount}-`);
+
+    const fields = newForm.querySelectorAll('input, textarea, select');
+    fields.forEach((field) => {
+      if (field.type === 'hidden' && field.name.endsWith('-id')) {
+        field.value = '';
+        return;
+      }
+
+      if (field.name && field.name.endsWith('-DELETE')) {
+        field.checked = false;
+        return;
+      }
+
+      if (field.type === 'checkbox' || field.type === 'radio') {
+        field.checked = false;
+      } else if (field.type !== 'hidden') {
+        field.value = '';
+      }
+    });
+
+    newForm.querySelectorAll('.alert.alert-danger').forEach(el => el.remove());
+    container.appendChild(newForm);
+    totalFormsInput.value = formCount + 1;
+    bindDeleteButtons();
+  }
+
+  function bindDeleteButtons() {
+    document.querySelectorAll('.remove-form-btn').forEach(btn => {
+      btn.onclick = function () {
+        const formBox = this.closest('.edu-form, .exp-form, .lnk-form');
+        if (!formBox) return;
+        const deleteInput = formBox.querySelector('input[name$="-DELETE"]');
+        if (deleteInput) {
+          deleteInput.checked = true;
+          formBox.style.display = 'none';
+        } else {
+          formBox.remove();
+        }
+      };
+    });
+  }
+  document.getElementById('add-edu')?.addEventListener('click', () => addAnotherForm('edu', 'edu-forms', 'edu-form'));
+  document.getElementById('add-exp')?.addEventListener('click', () => addAnotherForm('exp', 'exp-forms', 'exp-form'));
+  document.getElementById('add-lnk')?.addEventListener('click', () => addAnotherForm('lnk', 'lnk-forms', 'lnk-form'));
+  bindDeleteButtons();
+</script>
+{% endblock %}
