@@ -1,0 +1,18 @@
+<h1>Inbox</h1>
+
+{% if partners %}
+    <ul>
+        {% for other, last in partners %}
+            <li>
+                <a href="{% url 'messaging:thread' other.id %}">
+                    {{other.username}}
+            </a>
+            <div style="font-size: 0.9em; opacity: 0.8;">
+                Last: {{ last.content|truncatechars:60}} ({{ last.created_at }})
+            </div>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p> No messages yet.</p>
+{% endif %}
