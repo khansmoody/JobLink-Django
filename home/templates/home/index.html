@@ -1,11 +1,28 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container mt-5 text-center">
+<div class="container mt-5 mb-5 pb-5 text-center">
+  {% if user.is_authenticated %}
+    <h1>
+      Welcome back,
+      {% if user.first_name %}
+        {{ user.first_name }}!
+      {% else %}
+        {{ user.username }}!
+      {% endif %}
+    </h1>
+    <p class="lead">Ready to update your profile and stand out to recruiters?</p>
+    {% if user.role == 'job_seeker' %}
+      <a href="{% url 'accounts.profile_me' %}"
+         class="btn text-dark fw-semibold"
+         style="background:#EAAA00; border:1px solid #B3A369;">
+        Go to My Profile
+      </a>
+    {% endif %}
+  {% else %}
     <h1>Welcome to JobLink</h1>
     <p class="lead">Find your dream job or the perfect candidate here.</p>
     <hr>
-    {% if not user.is_authenticated %}
-        <a href="{% url 'accounts.login' %}" class="btn btn-primary">Get Started</a>
-    {% endif %}
+    <a href="{% url 'accounts.login' %}" class="btn btn-primary">Get Started</a>
+  {% endif %}
 </div>
 {% endblock content %}

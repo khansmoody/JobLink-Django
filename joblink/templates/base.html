@@ -14,44 +14,90 @@
     </script>
     <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      .navbar-dark .navbar-nav .nav-link {
+        color: #EAAA00 !important;
+        font-weight: 500;
+      }
+      .navbar-dark .navbar-nav .nav-link:hover,
+      .navbar-dark .navbar-nav .nav-link:focus {
+        color: #B3A369 !important;
+      }
+      .dropdown-menu .dropdown-item:active {
+        background-color: #003057;
+        color: #EAAA00;
+      }
+    </style>
   </head>
-
 
   <body>
     <!-- Header -->
-     <nav class="p-3 navbar navbar-dark bg-dark navbar-expand-lg">
+    <nav class="p-3 navbar navbar-dark navbar-expand-lg" style="background-color: #003057;">
       <div class="container">
         <a class="navbar-brand" href="{% url 'home.index' %}">
           <img src="{% static 'img/logo.png' %}" alt="logo" height="40" />
         </a>
-        <button class="navbar-toggler" type="button"
-                data-bs-toggle="collapse"
-                data-bs-target="#navbarNavAltMarkup"
-                aria-controls="navbarNavAltMarkup"
-                aria-expanded="false"
-                aria-label="Toggle navigation">
+
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNavAltMarkup"
+          aria-controls="navbarNavAltMarkup"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
           <div class="navbar-nav ms-auto navbar-ml">
             <a class="nav-link" href="{% url 'home.about' %}">About</a>
             <div class="vr bg-white mx-2 d-none d-lg-block"></div>
-            
+
             {% if user.is_authenticated %}
               {% if user.role == 'job_seeker' %}
+                <!-- User Story 1 -->
                 <a class="nav-link" href="#">Find Jobs</a>
                 <a class="nav-link" href="#">My Applications</a>
-              
+                <div class="nav-item dropdown ms-2">
+                  <a
+                    class="nav-link dropdown-toggle p-0 d-flex align-items-center"
+                    href="#"
+                    id="profileDropdown"
+                    role="button"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                  >
+                    {% if user.profile and user.profile.profile_photo %}
+                      <img
+                        src="{{ user.profile.profile_photo.url }}"
+                        alt="Profile"
+                        style="width:36px;height:36px;object-fit:cover;border-radius:50%;border:2px solid #EAAA00;"
+                      >
+                    {% else %}
+                      <div
+                        style="width:36px;height:36px;border-radius:50%;background:#B3A369;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;border:2px solid #EAAA00;"
+                      >
+                        {{ user.username|first|upper }}
+                      </div>
+                    {% endif %}
+                  </a>
+                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                    <li><a class="dropdown-item" href="{% url 'accounts.profile_me' %}">View Profile</a></li>
+                    <li><a class="dropdown-item" href="{% url 'accounts.profile_edit' %}">Edit Profile</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="{% url 'accounts.logout' %}">Logout ({{ user.username }})</a></li>
+                  </ul>
+                </div>
+
               {% elif user.role == 'recruiter' %}
                 <a class="nav-link" href="#">Post a Job</a>
                 <a class="nav-link" href="#">Manage Candidates</a>
-              
+
               {% elif user.role == 'admin' %}
-                <a class="nav-link" href="/admin/">Admin Panel</a>
+                <a class="nav-link" href="{% url 'admin:index' %}">Admin Panel</a>
               {% endif %}
 
-              <a class="nav-link" href="{% url 'accounts.logout' %}">Logout ({{user.username }})</a>
-            
             {% else %}
               <a class="nav-link" href="{% url 'accounts.login' %}">Login</a>
               <a class="nav-link" href="{% url 'accounts.signup' %}">Sign Up</a>
@@ -60,14 +106,12 @@
         </div>
       </div>
     </nav>
+    
     <!-- Header -->
-
-
     <div class="main-content">
       {% block content %}
       {% endblock content %}
     </div>
-
 
     <!-- Footer -->
     <section class="p-3 ms-footer d-none d-md-block">
@@ -76,32 +120,31 @@
           <div class="col-md-6 col-lg-6 col-xl-6 mx-auto mb-4">
             <b>Job Link</b>
             <hr />
-            <p>
-              Welcome to Job Link Website
-            </p>
+            <p>Welcome to Job Link Website</p>
           </div>
           <div class="col-md-3 col-lg-3 col-xl-3 mx-auto mb-4">
             <b>LINKS</b>
             <hr />
-            <p><a class="nav-link"
-              href="{% url 'home.about' %}">
-              About
-            </a></p>
+            <p>
+              <a class="nav-link" href="{% url 'home.about' %}">
+                About
+              </a>
+            </p>
           </div>
           <div class="col-md-3 col-lg-3 col-xl-3 mx-auto mb-4">
             <b>CONTACT</b>
             <hr />
-            <p><i class="fas fa-home me-2"></i>
-              Atlanta, GA 30024
-            </p>
+            <p><i class="fas fa-home me-2"></i>Atlanta, GA 30024</p>
           </div>
         </div>
       </div>
     </section>
-    <section class="p-3 ms-footer-bottom bg-dark">
+
+    <section class="p-3 ms-footer-bottom" style="background-color: #003057;">
       <div class="container d-flex justify-content-between">
         <div class="me-5 text-white">
-          <span>DESIGNED BY
+          <span>
+            DESIGNED BY
             <a href="https://www.x.com/danielgarax" target="_blank">HANGYEOL KIM</a>
           </span>
         </div>
@@ -110,6 +153,5 @@
         </div>
       </div>
     </section>
-    <!-- Footer -->
   </body>
 </html>
