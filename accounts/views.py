@@ -5,6 +5,8 @@ from django.core.exceptions import PermissionDenied
 from django.contrib import messages
 from .models import User, JobSeekerProfile, Skill
 from .forms import (
+    CustomUserCreationForm,
+    CustomErrorList,
     SignUpForm,
     JobSeekerProfileForm,
     SkillsCSVForm,
