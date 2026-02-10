@@ -22,10 +22,10 @@ class Job(models.Model):
     # Salary and Visa
     salary_min = models.IntegerField(default=0)
     salary_max = models.IntegerField(default=0)
-    visa_sponsorship = models.BooleanField(default=False)  # 비자 지원 여부
+    visa_sponsorship = models.BooleanField(default=False)
     
     # Management information
-    recruiter = models.ForeignKey(settings.AUTH_USER_MODEL, on_express_delete=models.CASCADE)
+    recruiter = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
