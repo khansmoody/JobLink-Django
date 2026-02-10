@@ -56,8 +56,12 @@
 
             {% if user.is_authenticated %}
               {% if user.role == 'job_seeker' %}
+
                 <!-- User Story 1 -->
-                <a class="nav-link" href="#">Find Jobs</a>
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'jobs:job_list' %}">Find Jobs</a>
+                </li>
+
                 <a class="nav-link" href="#">My Applications</a>
                 <div class="nav-item dropdown ms-2">
                   <a
