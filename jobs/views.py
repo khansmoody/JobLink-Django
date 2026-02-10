@@ -21,4 +21,4 @@ def job_list(request):
     if visa_support == 'on':
         jobs = jobs.filter(visa_sponsorship=True)
 
-    return render(request, 'jobs/job_list.html', {'jobs': jobs})
+    return render(request, 'jobs/jobs_list.html', {'jobs': jobs})
