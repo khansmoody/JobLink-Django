@@ -47,11 +47,24 @@
                                 <span class="badge bg-success">${{ job.salary_min }} - ${{ job.salary_max }}</span>
                             </div>
                             <h6 class="card-subtitle mb-2 text-muted">{{ job.company_name }} | {{ job.location }}</h6>
+                            
+                            <!-- User Story #20 -->
+                            {% if job.is_flagged and user == job.recruiter %}
+                            <span class="badge bg-danger">Flagged by Admin</span>
+                            {% endif %}
+                            
                             <p class="card-text text-truncate">{{ job.description }}</p>
                             <div class="mt-2">
                                 <span class="badge bg-light text-dark border">{{ job.work_type }}</span>
                                 {% if job.visa_sponsorship %}
                                 <span class="badge bg-info text-dark">Visa Sponsored</span>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- User Story #10 -->
+                            <div class="mt-2 d-flex justify-content-between align-items-center">
+                                {% if user.is_authenticated and user == job.recruiter %}
+                                <a href="{% url 'jobs:job_edit' job.pk %}" class="btn btn-sm btn-danger">Edit</a>
                                 {% endif %}
                             </div>
                         </div>

@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- User Story #10 -->
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h2 class="mb-4">{% if job %}Edit Job Posting{% else %}Post a Job{% endif %}</h2>
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="POST" action="">
+                        {% csrf_token %}
+
+                        <!-- Job Title -->
+                        <div class="mb-3">
+                            <label class="form-label">Job Title</label>
+                            <input type="text" name="title" class="form-control"
+                                placeholder="e.g. Software Engineer"
+                                value="{{ job.title|default:'' }}" required>
+                        </div>
+
+                        <!-- Company Name -->
+                        <div class="mb-3">
+                            <label class="form-label">Company Name</label>
+                            <input type="text" name="company_name" class="form-control"
+                                placeholder="e.g. Google"
+                                value="{{ job.company_name|default:'' }}" required>
+                        </div>
+
+                        <!-- Location -->
+                        <div class="mb-3">
+                            <label class="form-label">Location</label>
+                            <input type="text" name="location" class="form-control"
+                                placeholder="e.g. Atlanta, GA"
+                                value="{{ job.location|default:'' }}" required>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label class="form-label">Job Description</label>
+                            <textarea name="description" class="form-control" rows="5"
+                                placeholder="Describe the role, responsibilities, and requirements..."
+                                required>{{ job.description|default:'' }}</textarea>
+                        </div>
+
+                        <!-- Skills -->
+                        <div class="mb-3">
+                            <label class="form-label">Required Skills</label>
+                            <input type="text" name="skills" class="form-control"
+                                placeholder="e.g. Python, React, SQL (comma separated)"
+                                value="{{ job.skills|default:'' }}">
+                        </div>
+
+                        <!-- Work Type -->
+                        <div class="mb-3">
+                            <label class="form-label">Work Type</label>
+                            <select name="work_type" class="form-control">
+                                <option value="onsite"  {% if job.work_type == 'onsite'  %}selected{% endif %}>On-site</option>
+                                <option value="remote"  {% if job.work_type == 'remote'  %}selected{% endif %}>Remote</option>
+                                <option value="hybrid"  {% if job.work_type == 'hybrid'  %}selected{% endif %}>Hybrid</option>
+                            </select>
+                        </div>
+
+                        <!-- Salary Range -->
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <label class="form-label">Minimum Salary ($)</label>
+                                <input type="number" name="salary_min" class="form-control"
+                                    placeholder="e.g. 50000"
+                                    value="{{ job.salary_min|default:'' }}">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Maximum Salary ($)</label>
+                                <input type="number" name="salary_max" class="form-control"
+                                    placeholder="e.g. 90000"
+                                    value="{{ job.salary_max|default:'' }}">
+                            </div>
+                        </div>
+
+                        <!-- Visa Sponsorship -->
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox"
+                                name="visa_sponsorship" id="visaCheck"
+                                {% if job.visa_sponsorship %}checked{% endif %}>
+                            <label class="form-check-label" for="visaCheck">Visa Sponsorship Available</label>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                {% if job %}Update Job{% else %}Post Job{% endif %}
+                            </button>
+                            <a href="{% url 'jobs:job_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock content %}

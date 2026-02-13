@@ -59,7 +59,7 @@
 
                 <!-- User Story 1 -->
                 <li class="nav-item">
-                  <a class="nav-link" href="{% url 'jobs:job_list' %}">Find Jobs</a>
+                  <a class="nav-link" href="{% url 'jobs:job_list' %}">Available Jobs</a>
                 </li>
 
                 <a class="nav-link" href="#">My Applications</a>
@@ -93,10 +93,14 @@
                     <li><a class="dropdown-item text-danger" href="{% url 'accounts.logout' %}">Logout ({{ user.username }})</a></li>
                   </ul>
                 </div>
-
+              
+              <!-- User Story 10 -->  
               {% elif user.role == 'recruiter' %}
-                <a class="nav-link" href="#">Post a Job</a>
+                <a class="nav-link" href="{% url 'jobs:job_list' %}">Available Jobs</a>
+                <a class="nav-link" href="{% url 'jobs:job_post' %}">Post a Job</a>
                 <a class="nav-link" href="#">Manage Candidates</a>
+                <li><hr class="dropdown-divider"></li>
+                <a class="nav-link" href="{% url 'accounts.logout' %}">Logout ({{ user.username }})</a></li>
 
               {% elif user.role == 'admin' %}
                 <a class="nav-link" href="{% url 'admin:index' %}">Admin Panel</a>
@@ -149,7 +153,7 @@
         <div class="me-5 text-white">
           <span>
             DESIGNED BY
-            <a href="https://www.x.com/danielgarax" target="_blank">HANGYEOL KIM</a>
+            <a href="https://www.x.com/danielgarax" target="_blank">HANGYEOL KIM, MAI TRAN, MICHELLE RHEE, PHUONG TRAN, AND RAYMOND TAI</a>
           </span>
         </div>
         <div class="text-white">
