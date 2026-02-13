@@ -79,7 +79,7 @@ class JobSeekerProfileForm(BootstrapErrorMixin, forms.ModelForm):
         model = JobSeekerProfile
         fields = [
             'headline', 'location', 'about',
-            'contact_email', 'contact_phone', 'website', 'city_state',
+            'contact_email', 'contact_phone', 'website',
             'profile_photo', 'banner_image'
         ]
         widgets = {
@@ -89,7 +89,6 @@ class JobSeekerProfileForm(BootstrapErrorMixin, forms.ModelForm):
             'contact_email': forms.EmailInput(attrs={'placeholder': 'you@example.com'}),
             'contact_phone': forms.TextInput(attrs={'placeholder': '+1 123 456 7890'}),
             'website': forms.URLInput(attrs={'placeholder': 'https://yourportfolio.com'}),
-            'city_state': forms.TextInput(attrs={'placeholder': 'e.g., Atlanta, GA'}),
         }
     first_name = forms.CharField(
         required=False,
@@ -237,6 +236,56 @@ class ExternalLinkForm(BootstrapErrorMixin, forms.ModelForm):
         if url and not (url.startswith("http://") or url.startswith("https://")):
             raise forms.ValidationError("URL must start with http:// or https://")
         return url
+
+# User Story 5
+# Privacy Settings
+class PrivacySettingsForm(BootstrapErrorMixin, forms.ModelForm):
+    class Meta:
+        model = JobSeekerProfile
+        fields = [
+            'hide_email',
+            'hide_phone',
+            'profile_visibility',
+            'hide_full_name',
+            'hide_profile_photo',
+            'recruiter_contact_permission',
+            'message_filtering',
+        ]
+        widgets = {
+            'hide_email': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'hide_phone': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'hide_full_name': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'hide_profile_photo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'profile_visibility': forms.Select(attrs={'class': 'form-select'}),
+            'recruiter_contact_permission': forms.Select(attrs={'class': 'form-select'}),
+            'message_filtering': forms.Select(attrs={'class': 'form-select'}),
+        }
+        labels = {
+            'hide_email': 'Hide email address from recruiters',
+            'hide_phone': 'Hide phone number from recruiters',
+            'profile_visibility': 'Profile visibility',
+            'hide_full_name': 'Hide full name, show username only',
+            'hide_profile_photo': 'Hide profile picture from recruiters',
+            'recruiter_contact_permission': 'Who can contact me',
+            'message_filtering': 'Message filtering',
+        }
+    
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("error_class", CustomErrorList)
+        super().__init__(*args, **kwargs)
+
+# User Story 5 - 
+# Account Settings
+class AccountSettingsForm(BootstrapErrorMixin, forms.Form):
+    confirm_deletion = forms.BooleanField(
+        required=False,
+        label='I understand that deleting my account is permanent and cannot be undone',
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    )
+    
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("error_class", CustomErrorList)
+        super().__init__(*args, **kwargs)
 
 # Added 'formsets' which allow users to add/edit/delete multiple items at once
 # Users can add multiple schools, edit existing ones, or delete them which should be done all on one page

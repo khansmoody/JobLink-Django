@@ -3,7 +3,8 @@ from django.contrib.auth import login as auth_login, authenticate, logout as aut
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.contrib import messages
-from .models import User, JobSeekerProfile, Skill
+from django.db.models import Q
+from .models import User, JobSeekerProfile, Skill, Connection
 from .forms import (
     CustomUserCreationForm,
     CustomErrorList,
@@ -13,6 +14,8 @@ from .forms import (
     EducationFormSet,
     ExperienceFormSet,
     ExternalLinkFormSet,
+    PrivacySettingsForm,
+    AccountSettingsForm,
 )
 
 # Logout
@@ -75,7 +78,31 @@ def profile_view(request, username=None):
             'contact_phone': target_user.phone_number or '',
         }
     )
-    context = {'template_data': {'title': f"{target_user.username} | Profile", 'profile': profile, 'is_owner': request.user == target_user,}}
+    
+    # User Story 5
+    # Check if profile is viewable based on privacy settings
+    is_owner = request.user == target_user
+    if not is_owner and profile.profile_visibility == 'private':
+        messages.error(request, "This profile is set to private and cannot be viewed.")
+        return redirect('accounts.connections')
+    is_recruiter = request.user.role == 'recruiter' if request.user.is_authenticated else False
+    
+    # Get connection
+    connection_status = None
+    connection_count = profile.get_connection_count()
+    if not is_owner and request.user.role == 'job_seeker' and target_user.role == 'job_seeker':
+        connection_status = profile.get_connection_status(request.user)
+    
+    context = {
+        'template_data': {
+            'title': f"{target_user.username} | Profile", 
+            'profile': profile, 
+            'is_owner': is_owner,
+            'is_recruiter': is_recruiter,
+            'connection_status': connection_status,
+            'connection_count': connection_count,
+        }
+    }
     return render(request, 'accounts/profile.html', context)
 
 
@@ -142,3 +169,217 @@ def profile_edit(request):
         }
     }
     return render(request, 'accounts/profile_edit.html', context)
+
+# User Story 5
+# Settings & Privacy View
+@login_required
+def settings_view(request):
+    if request.user.role != 'job_seeker':
+        raise PermissionDenied("Only job seekers can access privacy settings.")
+    profile, _ = JobSeekerProfile.objects.get_or_create(
+        user=request.user,
+        defaults={
+            'headline': 'Add your professional headline',
+            'contact_email': request.user.email or '',
+            'contact_phone': request.user.phone_number or '',
+        }
+    )
+    
+    if request.method == 'POST':
+        if 'save_privacy' in request.POST:
+            privacy_form = PrivacySettingsForm(request.POST, instance=profile)
+            account_form = AccountSettingsForm()
+            
+            if privacy_form.is_valid():
+                privacy_form.save()
+                messages.success(request, "Privacy settings updated successfully.")
+                return redirect('accounts.settings')
+        
+        elif 'delete_account' in request.POST:
+            privacy_form = PrivacySettingsForm(instance=profile)
+            account_form = AccountSettingsForm(request.POST)
+            
+            if account_form.is_valid() and account_form.cleaned_data.get('confirm_deletion'):
+                username = request.user.username
+                request.user.delete()
+                messages.success(request, f"Account {username} has been permanently deleted.")
+                return redirect('home.index')
+            else:
+                messages.error(request, "Please confirm account deletion by checking the box.")
+    else:
+        privacy_form = PrivacySettingsForm(instance=profile)
+        account_form = AccountSettingsForm()
+
+    context = {
+        'template_data': {
+            'title': 'Settings & Privacy',
+            'privacy_form': privacy_form,
+            'account_form': account_form,
+            'profile': profile,
+        }
+    }
+    return render(request, 'accounts/settings.html', context)
+
+# Search for job seeker profiles so you can form connections or just look at others
+# Was mostly for seeing if privacy settings (User story 5) was working or not
+@login_required
+def search_profiles(request):
+    query = request.GET.get('q', '').strip()
+    results = []
+    
+    if query:
+        # Search across username, first name, last name, headline, and location
+        results = JobSeekerProfile.objects.filter(
+            Q(user__username__icontains=query) |
+            Q(user__first_name__icontains=query) |
+            Q(user__last_name__icontains=query) |
+            Q(headline__icontains=query) |
+            Q(location__icontains=query) |
+            Q(skills__name__icontains=query)
+        ).filter(
+            user__role='job_seeker'
+        ).distinct().select_related('user')
+        
+        # Filter out private profiles unless it's the owner
+        results = [
+            profile for profile in results 
+            if profile.profile_visibility == 'public' or profile.user == request.user
+        ]
+
+        for profile in results:
+            if profile.user != request.user:
+                profile.connection_status_with_me = profile.get_connection_status(request.user)
+                profile.connection_count = profile.get_connection_count()
+            else:
+                profile.connection_status_with_me = None
+                profile.connection_count = profile.get_connection_count()
+    
+    context = {
+        'template_data': {
+            'title': 'Search Profiles',
+            'query': query,
+            'results': results,
+            'result_count': len(results),
+        }
+    }
+    return render(request, 'accounts/search.html', context)
+
+
+# Send connection request
+@login_required
+def send_connection_request(request, username):
+    if request.user.role != 'job_seeker':
+        messages.error(request, "Only job seekers can send connection requests.")
+        return redirect('home.index')
+    
+    to_user = get_object_or_404(User, username=username, role='job_seeker')
+    
+    if to_user == request.user:
+        messages.error(request, "You cannot connect with yourself.")
+        return redirect('accounts.profile_user', username=username)
+    
+    existing_connection = Connection.objects.filter(
+        Q(from_user=request.user, to_user=to_user) |
+        Q(from_user=to_user, to_user=request.user)
+    ).first()
+    
+    if existing_connection:
+        if existing_connection.status == 'pending':
+            messages.info(request, "Connection request already pending.")
+        elif existing_connection.status == 'accepted':
+            messages.info(request, "You are already connected with this user.")
+        return redirect('accounts.profile_user', username=username)
+    
+    Connection.objects.create(
+        from_user=request.user,
+        to_user=to_user,
+        status='pending'
+    )
+    
+    messages.success(request, f"Connection request sent to {to_user.username}.")
+    return redirect('accounts.profile_user', username=username)
+
+
+# Accept connection request
+@login_required
+def accept_connection(request, connection_id):
+    connection = get_object_or_404(Connection, id=connection_id, to_user=request.user, status='pending')
+    connection.status = 'accepted'
+    connection.save()
+    messages.success(request, f"You are now connected with {connection.from_user.username}.")
+    return redirect('accounts.connections')
+
+
+# Decline connection request
+@login_required
+def decline_connection(request, connection_id):
+    connection = get_object_or_404(Connection, id=connection_id, to_user=request.user, status='pending')
+    connection.status = 'declined'
+    connection.save()
+    messages.info(request, f"Connection request from {connection.from_user.username} declined.")
+    return redirect('accounts.connections')
+
+
+# Remove connection
+@login_required
+def remove_connection(request, username):
+    other_user = get_object_or_404(User, username=username)
+    connection = Connection.objects.filter(
+        Q(from_user=request.user, to_user=other_user) |
+        Q(from_user=other_user, to_user=request.user),
+        status='accepted'
+    ).first()
+    
+    if connection:
+        connection.delete()
+        messages.success(request, f"You are no longer connected with {other_user.username}.")
+    else:
+        messages.error(request, "Connection not found.")
+    
+    return redirect('accounts.profile_user', username=username)
+
+
+# View all connections and pending requests
+@login_required
+def connections_list(request):
+    if request.user.role != 'job_seeker':
+        messages.error(request, "Only job seekers can view connections.")
+        return redirect('home.index')
+    
+    accepted_connections = Connection.objects.filter(
+        Q(from_user=request.user) | Q(to_user=request.user),
+        status='accepted'
+    ).select_related('from_user', 'to_user', 'from_user__profile', 'to_user__profile')
+    
+    # Get pending requests received (waiting for this user to accept)
+    pending_received = Connection.objects.filter(
+        to_user=request.user,
+        status='pending'
+    ).select_related('from_user', 'from_user__profile')
+    
+    # Get pending requests sent (waiting for other user to accept)
+    pending_sent = Connection.objects.filter(
+        from_user=request.user,
+        status='pending'
+    ).select_related('to_user', 'to_user__profile')
+    
+    connected_users = []
+    for conn in accepted_connections:
+        other_user = conn.to_user if conn.from_user == request.user else conn.from_user
+        connected_users.append({
+            'user': other_user,
+            'profile': other_user.profile,
+            'connection': conn,
+        })
+    
+    context = {
+        'template_data': {
+            'title': 'My Connections',
+            'connected_users': connected_users,
+            'pending_received': pending_received,
+            'pending_sent': pending_sent,
+            'connection_count': len(connected_users),
+            'pending_count': pending_received.count(),
+        }
+    }
+    return render(request, 'accounts/connections.html', context)
