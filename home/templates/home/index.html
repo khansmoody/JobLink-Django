@@ -2,15 +2,19 @@
 {% block content %}
 <div class="container mt-5 mb-5 pb-5 text-center">
   {% if user.is_authenticated %}
-    <h1>
-      Welcome back,
-      {% if user.first_name %}
-        {{ user.first_name }}!
-      {% else %}
-        {{ user.username }}!
-      {% endif %}
-    </h1>
+      <h1>
+        Welcome back,
+        {% if user.first_name %}
+          {{ user.first_name }}!
+        {% else %}
+          {{ user.username }}!
+        {% endif %}
+      </h1>
+  {% if user.role == 'job_seeker' %}
     <p class="lead">Ready to update your profile and stand out to recruiters?</p>
+  {% elif user.role == 'recruiter' %}
+  <p class="lead">Ready to find the perfect candidate or post some jobs now?</p>
+  {% endif %}
     {% if user.role == 'job_seeker' %}
       <a href="{% url 'accounts.profile_me' %}"
          class="btn text-dark fw-semibold"

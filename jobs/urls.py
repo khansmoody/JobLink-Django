@@ -5,4 +5,6 @@ app_name = 'jobs'
 
 urlpatterns = [
     path('', views.job_list, name='job_list'),
+    path('post/', views.job_post, name='job_post'),  # User Story #10
+    path('<int:pk>/edit/', views.job_edit, name='job_edit'), # User Story #10
 ]
