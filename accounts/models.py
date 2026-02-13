@@ -47,7 +47,6 @@ class JobSeekerProfile(models.Model):
     contact_email = models.EmailField(blank=True)
     contact_phone = models.CharField(max_length=25, blank=True)
     website = models.URLField(blank=True)
-    city_state = models.CharField(max_length=120, blank=True)
     # Profile picture here
     profile_photo = models.ImageField(
         upload_to='profiles/avatars/',
@@ -66,6 +65,37 @@ class JobSeekerProfile(models.Model):
     created_at = models.DateTimeField(auto_now_add=True) # auto records when this profile was first created
     updated_at = models.DateTimeField(auto_now=True) # same thing auto records last updated
 
+    # User Story 5
+    hide_email = models.BooleanField(default=False)  # Hide email from recruiters
+    hide_phone = models.BooleanField(default=False)  # Hide phone number from recruiters
+    profile_visibility = models.CharField(  # Public or Private profile
+        max_length=20,
+        choices=[
+            ('public', 'Public - Anyone can view my profile'),
+            ('private', 'Private - Only I can view my profile'),
+        ],
+        default='public'
+    )
+    hide_full_name = models.BooleanField(default=False)  # Hide full name, show username only
+    hide_profile_photo = models.BooleanField(default=False)  # Hide profile picture from recruiters
+    recruiter_contact_permission = models.CharField(  # Who can contact me
+        max_length=20,
+        choices=[
+            ('all', 'All Recruiters'),
+            ('none', 'No Recruiters'),
+        ],
+        default='all'
+    )
+    message_filtering = models.CharField(
+        max_length=20,
+        choices=[
+            ('anyone', 'Accept messages from anyone'),
+            ('connections', 'Connections only'),
+            ('none', 'No messages'),
+        ],
+        default='anyone'
+    )
+
     # Returns user's full name or username
     def display_name(self):
         full = f"{self.user.first_name} {self.user.last_name}".strip()
@@ -73,6 +103,96 @@ class JobSeekerProfile(models.Model):
 
     def __str__(self):
         return f"Profile({self.display_name()})"
+    
+    def get_display_name(self, viewer_user=None):
+        if self.hide_full_name:
+            return self.user.username
+        return self.display_name()
+
+    def is_viewable_by(self, viewer_user):
+        if self.user == viewer_user:  # Owner can always view their own profile
+            return True
+        if self.profile_visibility == 'private':  # Private profiles only viewable by owner
+            return False
+        return True  # Public profiles viewable by everyone
+    
+    def get_connection_count(self):
+        return Connection.objects.filter(
+            models.Q(from_user=self.user) | models.Q(to_user=self.user),
+            status='accepted'
+        ).count()
+    
+    def is_connected_to(self, other_user):
+        if self.user == other_user:
+            return False
+        return Connection.objects.filter(
+            models.Q(from_user=self.user, to_user=other_user) |
+            models.Q(from_user=other_user, to_user=self.user),
+            status='accepted'
+        ).exists()
+
+    def get_connection_status(self, other_user):
+        if self.user == other_user:
+            return None
+        
+        sent_request = Connection.objects.filter(
+            from_user=self.user,
+            to_user=other_user,
+            status='pending'
+        ).first()
+        if sent_request:
+            return 'pending_sent'
+        
+        received_request = Connection.objects.filter(
+            from_user=other_user,
+            to_user=self.user,
+            status='pending'
+        ).first()
+        if received_request:
+            return 'pending_received'
+        
+        if self.is_connected_to(other_user):
+            return 'accepted'
+
+        return None
+
+# Connection Model 
+# Represents a connection between two users (like LinkedIn connections).
+class Connection(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('accepted', 'Accepted'),
+        ('declined', 'Declined'),
+    ]
+    
+    from_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='connections_sent'
+    )
+    to_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='connections_received'
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ['from_user', 'to_user']
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.from_user.username} -> {self.to_user.username} ({self.status})"
+    
+    def clean(self):
+        if self.from_user == self.to_user:
+            raise ValidationError("Users cannot connect with themselves.")
 
 # Creates database table for storing skills
 # Links these skills to the jobseeker profile
