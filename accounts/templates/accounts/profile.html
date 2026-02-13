@@ -2,6 +2,17 @@
 {% block content %}
 <div class="container my-4">
 
+  <!-- User Story 5 -->
+  {% if not template_data.is_owner and template_data.profile.profile_visibility == 'public' %}
+    <div class="alert alert-info mb-3">
+      <i class="fas fa-info-circle me-2"></i>
+      <strong>Public Profile</strong> - This user's profile is visible to all recruiters.
+      {% if template_data.profile.hide_email or template_data.profile.hide_phone or template_data.profile.hide_full_name or template_data.profile.hide_profile_photo %}
+        Some information is hidden by user preference.
+      {% endif %}
+    </div>
+  {% endif %}
+
   <div class="card shadow-sm border-0 mb-4">
     <div style="height: 220px; background-color:#003057; overflow:hidden; border-radius: 12px 12px 0 0;">
       {% if template_data.profile.banner_image %}
@@ -12,31 +23,83 @@
 
     <div class="p-4 position-relative bg-white" style="border-radius:0 0 12px 12px;">
       <div style="margin-top:-80px;">
-        {% if template_data.profile.profile_photo %}
-          <img src="{{ template_data.profile.profile_photo.url }}" alt="Avatar"
-               style="width:140px;height:140px;object-fit:cover;border-radius:50%;border:5px solid #fff;">
+        <!-- User Story 5 -->
+        {% if template_data.is_owner %}
+          {% if template_data.profile.profile_photo %}
+            <img src="{{ template_data.profile.profile_photo.url }}" alt="Avatar"
+                 style="width:140px;height:140px;object-fit:cover;border-radius:50%;border:5px solid #fff;">
+          {% else %}
+            <div style="width:140px;height:140px;border-radius:50%;border:5px solid #fff;background:#EAAA00;"></div>
+          {% endif %}
         {% else %}
-          <div style="width:140px;height:140px;border-radius:50%;border:5px solid #fff;background:#EAAA00;"></div>
+          {% if template_data.profile.hide_profile_photo %}
+            <div style="width:140px;height:140px;border-radius:50%;border:5px solid #fff;background:#B3A369;color:#fff;display:flex;align-items:center;justify-content:center;font-size:48px;font-weight:600;">
+              {{ template_data.profile.user.username|first|upper }}
+            </div>
+          {% elif template_data.profile.profile_photo %}
+            <img src="{{ template_data.profile.profile_photo.url }}" alt="Avatar"
+                 style="width:140px;height:140px;object-fit:cover;border-radius:50%;border:5px solid #fff;">
+          {% else %}
+            <div style="width:140px;height:140px;border-radius:50%;border:5px solid #fff;background:#EAAA00;"></div>
+          {% endif %}
         {% endif %}
       </div>
 
-      <h2 class="mt-3 mb-1">{{ template_data.profile.display_name }}</h2>
+      <!-- User Story 5 -->
+      <h2 class="mt-3 mb-1">
+        {% if template_data.is_owner %}
+          {{ template_data.profile.display_name }}
+        {% else %}
+          {% if template_data.profile.hide_full_name %}
+            {{ template_data.profile.user.username }}
+          {% else %}
+            {{ template_data.profile.display_name }}
+          {% endif %}
+        {% endif %}
+      </h2>
+      
       <p class="mb-1">{{ template_data.profile.headline }}</p>
-      {% if template_data.profile.location %}
-        <p class="text-muted mb-2">{{ template_data.profile.location }}</p>
-      {% endif %}
+      <p class="text-muted mb-2">{{ template_data.profile.location }}</p>
+      
+      <!-- Connection Stuff -->
+      <p class="mb-3">
+        <i class="fas fa-users me-1" style="color:#EAAA00;"></i>
+        <strong>{{ template_data.connection_count }}</strong> connection{{ template_data.connection_count|pluralize }}
+      </p>
 
       <div class="mt-2">
         <small class="text-muted d-block">Contact</small>
-        {% if template_data.profile.contact_email %}
-          <div>Email: {{ template_data.profile.contact_email }}</div>
+        
+        <!-- User Story 5 -->
+        {% if template_data.is_owner %}
+          {% if template_data.profile.contact_email %}
+            <div>Email: {{ template_data.profile.contact_email }}</div>
+          {% endif %}
+        {% else %}
+          {% if template_data.profile.hide_email %}
+            <div class="text-muted fst-italic">
+              <i class="fas fa-lock me-1"></i>Email hidden by user
+            </div>
+          {% elif template_data.profile.contact_email %}
+            <div>Email: {{ template_data.profile.contact_email }}</div>
+          {% endif %}
         {% endif %}
-        {% if template_data.profile.contact_phone %}
-          <div>Phone: {{ template_data.profile.contact_phone }}</div>
+        
+        <!-- User Story 5 -->
+        {% if template_data.is_owner %}
+          {% if template_data.profile.contact_phone %}
+            <div>Phone: {{ template_data.profile.contact_phone }}</div>
+          {% endif %}
+        {% else %}
+          {% if template_data.profile.hide_phone %}
+            <div class="text-muted fst-italic">
+              <i class="fas fa-lock me-1"></i>Phone hidden by user
+            </div>
+          {% elif template_data.profile.contact_phone %}
+            <div>Phone: {{ template_data.profile.contact_phone }}</div>
+          {% endif %}
         {% endif %}
-        {% if template_data.profile.city_state %}
-          <div>City/State: {{ template_data.profile.city_state }}</div>
-        {% endif %}
+        
         {% if template_data.profile.website %}
           <div>
             Website:
@@ -45,13 +108,71 @@
             </a>
           </div>
         {% endif %}
-        {% if not template_data.profile.contact_email and not template_data.profile.contact_phone and not template_data.profile.city_state and not template_data.profile.website %}
-          <div class="text-muted">No contact information added yet.</div>
+        
+        <!-- User Story 5 -->
+        {% if not template_data.is_owner %}
+          {% if not template_data.profile.contact_email and not template_data.profile.contact_phone and not template_data.profile.website %}
+            <div class="text-muted">No contact information available.</div>
+          {% endif %}
         {% endif %}
       </div>
 
       {% if template_data.is_owner %}
-        <a href="{% url 'accounts.profile_edit' %}" class="btn text-white mt-3" style="background:#003057;">Edit profile</a>
+        <div class="mt-3 d-flex gap-2">
+          <a href="{% url 'accounts.profile_edit' %}" class="btn text-white" style="background:#003057;">Edit Profile</a>
+          <a href="{% url 'accounts.settings' %}" class="btn text-white" style="background:#EAAA00;">Settings & Privacy</a>  <!-- User Story 5 -->
+        </div>
+        
+        <!-- User Story 5 -->
+        <div class="mt-3 p-3 rounded" style="background-color: #f8f9fa; border-left: 4px solid #EAAA00;">
+          <small class="fw-bold d-block mb-2" style="color: #003057;">
+            <i class="fas fa-shield-alt me-1"></i>Your Privacy Settings
+          </small>
+          <small class="d-block mb-1">
+            Profile Visibility: 
+            {% if template_data.profile.profile_visibility == 'private' %}
+              <span class="badge" style="background:#dc3545;">Private</span>
+            {% else %}
+              <span class="badge" style="background:#28a745;">Public</span>
+            {% endif %}
+          </small>
+          {% if template_data.profile.hide_email %}<small class="d-block"><i class="fas fa-check text-success me-1"></i>Email is hidden</small>{% endif %}
+          {% if template_data.profile.hide_phone %}<small class="d-block"><i class="fas fa-check text-success me-1"></i>Phone is hidden</small>{% endif %}
+          {% if template_data.profile.hide_full_name %}<small class="d-block"><i class="fas fa-check text-success me-1"></i>Full name is hidden (showing username)</small>{% endif %}
+          {% if template_data.profile.hide_profile_photo %}<small class="d-block"><i class="fas fa-check text-success me-1"></i>Profile photo is hidden</small>{% endif %}
+          {% if not template_data.profile.hide_email and not template_data.profile.hide_phone and not template_data.profile.hide_full_name and not template_data.profile.hide_profile_photo and template_data.profile.profile_visibility == 'public' %}
+            <small class="text-muted fst-italic">All information is public</small>
+          {% endif %}
+        </div>
+      {% else %}
+        <!-- Connect Stuff -->
+        {% if user.role == 'job_seeker' and template_data.profile.user.role == 'job_seeker' %}
+          <div class="mt-3 d-flex gap-2">
+            {% if template_data.connection_status == 'accepted' %}
+              <button class="btn btn-success" disabled>
+                <i class="fas fa-check me-2"></i>Connected
+              </button>
+              <a href="{% url 'accounts.remove_connection' username=template_data.profile.user.username %}" 
+                 class="btn btn-outline-danger"
+                 onclick="return confirm('Are you sure you want to remove this connection?');">
+                <i class="fas fa-user-times me-2"></i>Remove Connection
+              </a>
+            {% elif template_data.connection_status == 'pending_sent' %}
+              <button class="btn btn-warning" disabled>
+                <i class="fas fa-clock me-2"></i>Connection Pending
+              </button>
+            {% elif template_data.connection_status == 'pending_received' %}
+              <a href="{% url 'accounts.connections' %}" class="btn text-white" style="background:#EAAA00;">
+                <i class="fas fa-user-check me-2"></i>Respond to Request
+              </a>
+            {% else %}
+              <a href="{% url 'accounts.connect' username=template_data.profile.user.username %}" 
+                 class="btn text-white" style="background:#EAAA00;">
+                <i class="fas fa-user-plus me-2"></i>Connect
+              </a>
+            {% endif %}
+          </div>
+        {% endif %}
       {% endif %}
     </div>
   </div>
@@ -76,7 +197,7 @@
     <h5>Experience</h5>
     {% for e in template_data.profile.experience_items.all %}
       <div class="mb-3 pb-2 border-bottom">
-        <strong>{{ e.title }}</strong> — {{ e.company_name }}<br>
+        <strong>{{ e.title }}</strong> – {{ e.company_name }}<br>
         <small class="text-muted">{{ e.start_date }} - {% if e.is_current %}Present{% else %}{{ e.end_date|default:"" }}{% endif %}</small>
         <p class="mb-0 mt-1">{{ e.description }}</p>
       </div>
@@ -107,7 +228,6 @@
         <li>No links added yet.</li>
       {% endfor %}
     </ul>
-  </div></div>
-
+  </div>
 </div>
 {% endblock %}

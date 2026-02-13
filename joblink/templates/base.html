@@ -27,6 +27,31 @@
         background-color: #003057;
         color: #EAAA00;
       }
+      .search-form {
+        max-width: 400px;
+      }
+      .search-form input {
+        background-color: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+      }
+      .search-form input::placeholder {
+        color: rgba(255, 255, 255, 0.7);
+      }
+      .search-form input:focus {
+        background-color: rgba(255, 255, 255, 0.3);
+        border-color: #EAAA00;
+        color: white;
+      }
+      .search-form button {
+        background-color: #EAAA00;
+        border-color: #EAAA00;
+        color: #003057;
+      }
+      .search-form button:hover {
+        background-color: #B3A369;
+        border-color: #B3A369;
+      }
     </style>
   </head>
 
@@ -50,6 +75,24 @@
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+          
+          <!-- Search Bar for Job Seekers -->
+          {% if user.is_authenticated and user.role == 'job_seeker' %}
+            <form method="get" action="{% url 'accounts.search' %}" class="d-flex search-form mx-auto my-2 my-lg-0">
+              <input 
+                class="form-control me-2" 
+                type="search" 
+                name="q" 
+                placeholder="Search profiles..." 
+                aria-label="Search"
+                value="{{ request.GET.q }}"
+              >
+              <button class="btn" type="submit">
+                <i class="fas fa-search"></i>
+              </button>
+            </form>
+          {% endif %}
+          
           <div class="navbar-nav ms-auto navbar-ml">
             <a class="nav-link" href="{% url 'home.about' %}">About</a>
             <div class="vr bg-white mx-2 d-none d-lg-block"></div>
@@ -63,6 +106,12 @@
                 </li>
 
                 <a class="nav-link" href="#">My Applications</a>
+                
+                <!-- Connections Link -->
+                <a class="nav-link" href="{% url 'accounts.connections' %}">
+                  <i class="fas fa-users me-1"></i>Connections
+                </a>
+                
                 <div class="nav-item dropdown ms-2">
                   <a
                     class="nav-link dropdown-toggle p-0 d-flex align-items-center"
@@ -89,6 +138,7 @@
                   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
                     <li><a class="dropdown-item" href="{% url 'accounts.profile_me' %}">View Profile</a></li>
                     <li><a class="dropdown-item" href="{% url 'accounts.profile_edit' %}">Edit Profile</a></li>
+                    <li><a class="dropdown-item" href="{% url 'accounts.settings' %}">Settings & Privacy</a></li>  <!-- User Story 5: Settings link in navbar -->
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item text-danger" href="{% url 'accounts.logout' %}">Logout ({{ user.username }})</a></li>
                   </ul>
@@ -153,7 +203,7 @@
           </span>
         </div>
         <div class="text-white">
-          <span>© Copyright - 2026</span>
+          <span>&copy; Copyright - 2026</span>
         </div>
       </div>
     </section>
