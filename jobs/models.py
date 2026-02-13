@@ -28,5 +28,8 @@ class Job(models.Model):
     recruiter = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # Checks to see if job post is spam (flags it) (User Story #20)
+    is_flagged = models.BooleanField(default=False)
+
     def __str__(self):
         return f"{self.title} at {self.company_name}"
