@@ -1,7 +1,11 @@
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+
 from django.db.models import Q
+
 from .models import Job
+from .models import JobApplication
 
 def job_list(request):
     jobs = Job.objects.all()
@@ -31,6 +35,7 @@ def job_list(request):
 
     return render(request, 'jobs/jobs_list.html', {'jobs': jobs})
 
+<<<<<<< Updated upstream
 # Post/Create a Job (User Story #10)
 @login_required
 def job_post(request):
@@ -67,3 +72,15 @@ def job_edit(request, pk):
         job.save()
         return redirect('jobs:job_list')
     return render(request, 'jobs/jobs_post_edit.html', {'job': job})
+
+@login_required
+def apply_job(request, job_id):
+    if request.method == "POST" and request.POST.get("comment", "").strip() != "":
+        job = Job.objects.get(id=job_id)
+        application = JobApplication()
+        application.comment = request.POST["comment"].strip()
+        application.job = job
+        application.user = request.user
+        application.save()
+    return redirect("jobs:job_list")
+

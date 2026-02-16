@@ -33,3 +33,20 @@ class Job(models.Model):
 
     def __str__(self):
         return f"{self.title} at {self.company_name}"
+
+class JobApplication(models.Model):
+    #Creates ID for an applications, comment(note), date, job, user
+    id = models.AutoField(primary_key=True)
+    comment = models.CharField(max_length=255, blank=True)
+    date = models.DateTimeField(auto_now_add=True)
+    job = models.ForeignKey(Job, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    
+    #Prevents users from having duplicate applications
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['job', 'user'], name='unique_job_application')
+        ]
+
+    def __str__(self):
+        return str(self.id) + ' - ' + self.job.title
