@@ -4,6 +4,8 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.contrib import messages
 from django.db.models import Q
+from django.shortcuts import render
+from .models import JobSeekerProfile
 from .models import User, JobSeekerProfile, Skill, Connection
 from .forms import (
     CustomUserCreationForm,
@@ -383,3 +385,32 @@ def connections_list(request):
         }
     }
     return render(request, 'accounts/connections.html', context)
+
+
+# Search with property (skills, location, projects)
+def candidate_search(request):
+    # 1. Bring 'public' profile (for privacy)
+    candidates = JobSeekerProfile.objects.filter(profile_visibility='public')
+
+    # 2. Read URL parameter (filter value)
+    location_query = request.GET.get('location')
+    skill_query = request.GET.get('skill')
+    project_query = request.GET.get('project')
+
+    # 3. Apply filter
+    if location_query:
+        # Search with region
+        candidates = candidates.filter(location__icontains=location_query)
+        
+    if skill_query:
+        # Search on name field of connected Skill model
+        candidates = candidates.filter(skills__name__icontains=skill_query).distinct()
+        
+    if project_query:
+        # Since there's no Project model, search at 'about' or 'experience'
+        candidates = candidates.filter(
+            Q(about__icontains=project_query) | 
+            Q(experience_items__description__icontains=project_query)
+        ).distinct()
+
+    return render(request, 'accounts/candidate_list.html', {'candidates': candidates})
