@@ -35,7 +35,6 @@ def job_list(request):
 
     return render(request, 'jobs/jobs_list.html', {'jobs': jobs})
 
-<<<<<<< Updated upstream
 # Post/Create a Job (User Story #10)
 @login_required
 def job_post(request):
@@ -75,12 +74,41 @@ def job_edit(request, pk):
 
 @login_required
 def apply_job(request, job_id):
+    if request.user.role != "job_seeker":
+        return redirect("jobs:job_list")
+
     if request.method == "POST" and request.POST.get("comment", "").strip() != "":
-        job = Job.objects.get(id=job_id)
-        application = JobApplication()
-        application.comment = request.POST["comment"].strip()
-        application.job = job
-        application.user = request.user
-        application.save()
+        job = get_object_or_404(Job, id=job_id)
+        comment = request.POST["comment"].strip()
+        application = JobApplication.objects.filter(job=job, user = request.user).first()
+        if application:
+            application.comment = comment
+            application.save(update_fields=["comment"])
+        else:
+            application = JobApplication.objects.create(job=job, user = request.user, comment = comment )
     return redirect("jobs:job_list")
 
+@login_required
+def my_applications(request):
+    if request.user.role != "job_seeker":
+        return redirect("jobs:job_list")
+    applications = (
+        JobApplication.objects.filter(user=request.user).select_related("job")
+        .order_by("-date")   
+    )
+    return render(request, "jobs/my_applications.html", {"applications": applications})
+
+@login_required
+def kanban(request):
+    if request.user.role != "recruiter":
+        return redirect("jobs:job_list")
+    application = JobApplication.objects.filter(job__recruiter=request.user).select_related("job", "user").order_by("-date")
+    grouped = {
+        "applied": application.filter(status="applied"),
+        "review": application.filter(status="review"),
+        "interview": application.filter(status="interview"),
+        "offer": application.filter(status="offer"),
+        "closed": application.filter(status="closed"),
+    }
+
+    return render(request, "jobs/kanban.html", { "grouped": grouped})

@@ -42,11 +42,15 @@ class JobApplication(models.Model):
     job = models.ForeignKey(Job, on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     
-    #Prevents users from having duplicate applications
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['job', 'user'], name='unique_job_application')
-        ]
+    STATUS_CHOICES = [
+        ('applied', 'Applied'),
+        ('review', 'Review'),
+        ('interview', 'Interview'),
+        ('offer', 'Offer'),
+        ('closed', 'Closed'),
+    ]
+    status = models.CharField(max_length=20, choices = STATUS_CHOICES, default = 'applied')
+    
 
     def __str__(self):
         return str(self.id) + ' - ' + self.job.title
