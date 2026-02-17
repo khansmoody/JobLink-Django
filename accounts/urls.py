@@ -14,4 +14,5 @@ urlpatterns = [
     path('connection/accept/<int:connection_id>/', views.accept_connection, name='accounts.accept_connection'),
     path('connection/decline/<int:connection_id>/', views.decline_connection, name='accounts.decline_connection'),
     path('connection/remove/<str:username>/', views.remove_connection, name='accounts.remove_connection'),
+    path('candidates/', views.candidate_search, name='candidate_search'),
 ]
