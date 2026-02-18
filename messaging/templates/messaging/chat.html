@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 900px;">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+      <h3 class="mb-0">Chat</h3>
+      <div class="text-muted">
+        {% if request.user == conversation.recruiter %}
+          Talking to <span class="fw-semibold">{{ conversation.candidate.username }}</span>
+        {% else %}
+          Talking to <span class="fw-semibold">{{ conversation.recruiter.username }}</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <a class="btn btn-outline-secondary btn-sm" href="{% url 'messaging:inbox' %}">
+      <i class="fas fa-arrow-left me-1"></i>Back to Inbox
+    </a>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body" style="height: 420px; overflow-y: auto;">
+      {% if messages %}
+        {% for m in messages %}
+          <div class="mb-3 d-flex {% if m.sender == request.user %}justify-content-end{% else %}justify-content-start{% endif %}">
+            <div class="p-3 rounded-3 border" style="max-width: 70%;">
+              <div class="small text-muted mb-1">
+                <span class="fw-semibold">{{ m.sender.username }}</span>
+                • {{ m.created_at|date:"M d, g:i A" }}
+              </div>
+              <div>{{ m.content }}</div>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p class="text-muted mb-0">No messages yet. Say hi.</p>
+      {% endif %}
+    </div>
+
+    <div class="card-footer bg-white">
+      <form method="POST" class="d-flex gap-2">
+        {% csrf_token %}
+        <input class="form-control" type="text" name="message" placeholder="Type a message..." required>
+        <button class="btn btn-primary" type="submit">
+          <i class="fas fa-paper-plane me-1"></i>Send
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
