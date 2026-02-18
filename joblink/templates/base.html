@@ -163,11 +163,8 @@
               {% elif user.role == 'recruiter' %}
                 <a class="nav-link" href="{% url 'jobs:job_list' %}">Available Jobs</a>
                 <a class="nav-link" href="{% url 'jobs:job_post' %}">Post a Job</a>
-<<<<<<< HEAD
                 <a class="nav-link" href="{% url 'jobs:kanban' %}">Manage Candidates</a>
-=======
-                <a class="nav-link" href="{% url 'candidate_search' %}">Manage Candidates</a>
->>>>>>> main
+                <a class="nav-link" href="{% url 'candidate_search' %}">Search Candidates</a>
                 <li><hr class="dropdown-divider"></li>
                 <a class="nav-link" href="{% url 'accounts.logout' %}">Logout ({{ user.username }})</a></li>
 
