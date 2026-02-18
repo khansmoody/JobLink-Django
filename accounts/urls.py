@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import views_admin
 urlpatterns = [
     path('signup', views.signup, name='accounts.signup'),
     path('login/', views.login, name='accounts.login'),
@@ -15,4 +16,6 @@ urlpatterns = [
     path('connection/decline/<int:connection_id>/', views.decline_connection, name='accounts.decline_connection'),
     path('connection/remove/<str:username>/', views.remove_connection, name='accounts.remove_connection'),
     path('candidates/', views.candidate_search, name='candidate_search'),
+    path("admin/users/", views_admin.user_list, name="admin_user_list"),
+    path("admin/users/<int:user_id>/role/", views_admin.update_role, name="admin_update_role"),
 ]

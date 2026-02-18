@@ -32,6 +32,11 @@
                             <strong>Location:</strong> {{ candidate.location|default:"Not specified" }}<br>
                         </p>
                         <a href="{% url 'accounts.profile_user' candidate.user.username %}" class="btn btn-sm btn-outline-secondary">View Profile</a>
+                        <a href="{% url 'messaging:start_conversation' candidate.user.id %}"
+                            class="btn btn-sm btn-primary ms-2">
+                            Message
+                        </a>
+
                     </div>
                 </div>
             </div>
