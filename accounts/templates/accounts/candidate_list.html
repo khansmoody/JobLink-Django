@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Find Candidates</h2>
+    
+    <form method="GET" action="{% url 'candidate_search' %}" class="row g-3 mb-4">
+        <div class="col-md-3">
+            <input type="text" name="skill" class="form-control" placeholder="Skills (e.g., Python)">
+        </div>
+        <div class="col-md-3">
+            <input type="text" name="location" class="form-control" placeholder="Location (e.g., Atlanta)">
+        </div>
+        <div class="col-md-4">
+            <input type="text" name="project" class="form-control" placeholder="Projects or Experience">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">Search</button>
+        </div>
+    </form>
+
+    <hr>
+
+    <div class="row">
+        {% for candidate in candidates %}
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ candidate.display_name }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">{{ candidate.headline }}</h6>
+                        <p class="card-text">
+                            <strong>Location:</strong> {{ candidate.location|default:"Not specified" }}<br>
+                        </p>
+                        <a href="{% url 'accounts.profile_user' candidate.user.username %}" class="btn btn-sm btn-outline-secondary">View Profile</a>
+                        <a href="{% url 'messaging:start_conversation' candidate.user.id %}"
+                            class="btn btn-sm btn-primary ms-2">
+                            Message
+                        </a>
+
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <p class="text-muted">No candidates found matching your criteria.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

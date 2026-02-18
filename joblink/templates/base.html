@@ -98,6 +98,19 @@
             <div class="vr bg-white mx-2 d-none d-lg-block"></div>
 
             {% if user.is_authenticated %}
+              <!-- User Story 13 -->
+                <a class="nav-link" href="{% url 'messaging:inbox' %}">
+                  <i class="fas fa-envelope me-1"></i>Messages
+                </a>
+                <div class="vr bg-white mx-2 d-none d-lg-block"></div>
+
+                <!-- User Story 19 -->
+                {% if user.role == 'admin' %}
+                  <a class="nav-link" href="{% url 'admin_user_list' %}">
+                    <i class="fas fa-shield-alt me-1"></i>Admin
+                  </a>
+                  <div class="vr bg-white mx-2 d-none d-lg-block"></div>
+                {% endif %}
               {% if user.role == 'job_seeker' %}
 
                 <!-- User Story 1 -->
@@ -150,7 +163,11 @@
               {% elif user.role == 'recruiter' %}
                 <a class="nav-link" href="{% url 'jobs:job_list' %}">Available Jobs</a>
                 <a class="nav-link" href="{% url 'jobs:job_post' %}">Post a Job</a>
+<<<<<<< HEAD
                 <a class="nav-link" href="{% url 'jobs:kanban' %}">Manage Candidates</a>
+=======
+                <a class="nav-link" href="{% url 'candidate_search' %}">Manage Candidates</a>
+>>>>>>> main
                 <li><hr class="dropdown-divider"></li>
                 <a class="nav-link" href="{% url 'accounts.logout' %}">Logout ({{ user.username }})</a></li>
 
