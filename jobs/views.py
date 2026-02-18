@@ -1,7 +1,11 @@
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+
 from django.db.models import Q
+
 from .models import Job
+from .models import JobApplication
 
 def job_list(request):
     jobs = Job.objects.all()
@@ -67,3 +71,44 @@ def job_edit(request, pk):
         job.save()
         return redirect('jobs:job_list')
     return render(request, 'jobs/jobs_post_edit.html', {'job': job})
+
+@login_required
+def apply_job(request, job_id):
+    if request.user.role != "job_seeker":
+        return redirect("jobs:job_list")
+
+    if request.method == "POST" and request.POST.get("comment", "").strip() != "":
+        job = get_object_or_404(Job, id=job_id)
+        comment = request.POST["comment"].strip()
+        application = JobApplication.objects.filter(job=job, user = request.user).first()
+        if application:
+            application.comment = comment
+            application.save(update_fields=["comment"])
+        else:
+            application = JobApplication.objects.create(job=job, user = request.user, comment = comment )
+    return redirect("jobs:job_list")
+
+@login_required
+def my_applications(request):
+    if request.user.role != "job_seeker":
+        return redirect("jobs:job_list")
+    applications = (
+        JobApplication.objects.filter(user=request.user).select_related("job")
+        .order_by("-date")   
+    )
+    return render(request, "jobs/my_applications.html", {"applications": applications})
+
+@login_required
+def kanban(request):
+    if request.user.role != "recruiter":
+        return redirect("jobs:job_list")
+    application = JobApplication.objects.filter(job__recruiter=request.user).select_related("job", "user").order_by("-date")
+    grouped = {
+        "applied": application.filter(status="applied"),
+        "review": application.filter(status="review"),
+        "interview": application.filter(status="interview"),
+        "offer": application.filter(status="offer"),
+        "closed": application.filter(status="closed"),
+    }
+
+    return render(request, "jobs/kanban.html", { "grouped": grouped})

@@ -1,4 +1,12 @@
 __pycache__/
 *.pyc
+<<<<<<< HEAD
+*.pyo
+db.sqlite3
+.env
+.DS_Store
+
+=======
 .DS_Store
 .env
+>>>>>>> main
