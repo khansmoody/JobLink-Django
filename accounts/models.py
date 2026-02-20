@@ -62,13 +62,13 @@ class JobSeekerProfile(models.Model):
         null=True,
         validators=[validate_banner]
     )
-    created_at = models.DateTimeField(auto_now_add=True) # auto records when this profile was first created
-    updated_at = models.DateTimeField(auto_now=True) # same thing auto records last updated
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     # User Story 5
-    hide_email = models.BooleanField(default=False)  # Hide email from recruiters
-    hide_phone = models.BooleanField(default=False)  # Hide phone number from recruiters
-    profile_visibility = models.CharField(  # Public or Private profile
+    hide_email = models.BooleanField(default=False)
+    hide_phone = models.BooleanField(default=False)
+    profile_visibility = models.CharField(
         max_length=20,
         choices=[
             ('public', 'Public - Anyone can view my profile'),
@@ -76,9 +76,9 @@ class JobSeekerProfile(models.Model):
         ],
         default='public'
     )
-    hide_full_name = models.BooleanField(default=False)  # Hide full name, show username only
-    hide_profile_photo = models.BooleanField(default=False)  # Hide profile picture from recruiters
-    recruiter_contact_permission = models.CharField(  # Who can contact me
+    hide_full_name = models.BooleanField(default=False)
+    hide_profile_photo = models.BooleanField(default=False)
+    recruiter_contact_permission = models.CharField(
         max_length=20,
         choices=[
             ('all', 'All Recruiters'),
@@ -96,7 +96,6 @@ class JobSeekerProfile(models.Model):
         default='anyone'
     )
 
-    # Returns user's full name or username
     def display_name(self):
         full = f"{self.user.first_name} {self.user.last_name}".strip()
         return full if full else self.user.username
@@ -110,11 +109,11 @@ class JobSeekerProfile(models.Model):
         return self.display_name()
 
     def is_viewable_by(self, viewer_user):
-        if self.user == viewer_user:  # Owner can always view their own profile
+        if self.user == viewer_user:
             return True
-        if self.profile_visibility == 'private':  # Private profiles only viewable by owner
+        if self.profile_visibility == 'private':
             return False
-        return True  # Public profiles viewable by everyone
+        return True
     
     def get_connection_count(self):
         return Connection.objects.filter(
