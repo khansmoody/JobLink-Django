@@ -31,6 +31,11 @@ class Job(models.Model):
     # Checks to see if job post is spam (flags it) (User Story #20)
     is_flagged = models.BooleanField(default=False)
 
+
+    # User Story #7: latitude, longitude to mark on map
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+
     def __str__(self):
         return f"{self.title} at {self.company_name}"
 
