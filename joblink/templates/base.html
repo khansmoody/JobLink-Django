@@ -165,11 +165,11 @@
                 <a class="nav-link" href="{% url 'jobs:job_post' %}">Post a Job</a>
                 <a class="nav-link" href="{% url 'jobs:kanban' %}">Manage Candidates</a>
                 <a class="nav-link" href="{% url 'candidate_search' %}">Search Candidates</a>
-                <li><hr class="dropdown-divider"></li>
                 <a class="nav-link" href="{% url 'accounts.logout' %}">Logout ({{ user.username }})</a></li>
 
               {% elif user.role == 'admin' %}
                 <a class="nav-link" href="{% url 'admin:index' %}">Admin Panel</a>
+                <a class="nav-link" href="{% url 'accounts.logout' %}">Logout ({{ user.username }})</a></li>
               {% endif %}
 
             {% else %}

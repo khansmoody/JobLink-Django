@@ -89,7 +89,6 @@ def profile_view(request, username=None):
         return redirect('accounts.connections')
     is_recruiter = request.user.role == 'recruiter' if request.user.is_authenticated else False
     
-    # Get connection
     connection_status = None
     connection_count = profile.get_connection_count()
     if not is_owner and request.user.role == 'job_seeker' and target_user.role == 'job_seeker':
@@ -230,7 +229,6 @@ def search_profiles(request):
     results = []
     
     if query:
-        # Search across username, first name, last name, headline, and location
         results = JobSeekerProfile.objects.filter(
             Q(user__username__icontains=query) |
             Q(user__first_name__icontains=query) |
@@ -242,7 +240,6 @@ def search_profiles(request):
             user__role='job_seeker'
         ).distinct().select_related('user')
         
-        # Filter out private profiles unless it's the owner
         results = [
             profile for profile in results 
             if profile.profile_visibility == 'public' or profile.user == request.user
@@ -353,13 +350,11 @@ def connections_list(request):
         status='accepted'
     ).select_related('from_user', 'to_user', 'from_user__profile', 'to_user__profile')
     
-    # Get pending requests received (waiting for this user to accept)
     pending_received = Connection.objects.filter(
         to_user=request.user,
         status='pending'
     ).select_related('from_user', 'from_user__profile')
     
-    # Get pending requests sent (waiting for other user to accept)
     pending_sent = Connection.objects.filter(
         from_user=request.user,
         status='pending'
@@ -386,28 +381,19 @@ def connections_list(request):
     }
     return render(request, 'accounts/connections.html', context)
 
-
-# Search with property (skills, location, projects)
 def candidate_search(request):
-    # 1. Bring 'public' profile (for privacy)
     candidates = JobSeekerProfile.objects.filter(profile_visibility='public')
-
-    # 2. Read URL parameter (filter value)
     location_query = request.GET.get('location')
     skill_query = request.GET.get('skill')
     project_query = request.GET.get('project')
 
-    # 3. Apply filter
     if location_query:
-        # Search with region
         candidates = candidates.filter(location__icontains=location_query)
         
     if skill_query:
-        # Search on name field of connected Skill model
         candidates = candidates.filter(skills__name__icontains=skill_query).distinct()
         
     if project_query:
-        # Since there's no Project model, search at 'about' or 'experience'
         candidates = candidates.filter(
             Q(about__icontains=project_query) | 
             Q(experience_items__description__icontains=project_query)
