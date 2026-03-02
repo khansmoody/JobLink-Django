@@ -9,6 +9,8 @@
         <div class="col-md-3 border-end">
             <h4 class="mb-3">Filters</h4>
             <form method="GET" action="{% url 'jobs:job_list' %}">
+
+
                 <div class="mb-3">
                     <label class="form-label">Search</label>
                     <input type="text" name="title" class="form-control" placeholder="Job title or skills..." value="{{ request.GET.title }}">
@@ -17,6 +19,24 @@
                 <div class="mb-3">
                     <label class="form-label">Location</label>
                     <input type="text" name="location" class="form-control" placeholder="City or State" value="{{ request.GET.location }}">
+                </div>
+
+                <input type="hidden" id="user_lat" name="lat" value="{{ request.GET.lat }}">
+                <input type="hidden" id="user_lon" name="lon" value="{{ request.GET.lon }}">
+
+                <div class="mb-3">
+                    <label class="form-label">Distance from me</label>
+                    <div class="input-group mb-2">
+                        <select name="radius" class="form-select">
+                            <option value="">Any</option>
+                            <option value="10" {% if request.GET.radius == '10' %}selected{% endif %}>10 mi</option>
+                            <option value="25" {% if request.GET.radius == '25' %}selected{% endif %}>25 mi</option>
+                            <option value="50" {% if request.GET.radius == '50' %}selected{% endif %}>50 mi</option>
+                        </select>
+                        <button type="button" class="btn btn-outline-success" onclick="getLocation()" title="Use my location">
+                            📍
+                        </button>
+                    </div>
                 </div>
 
                 <div class="mb-3">
@@ -33,6 +53,8 @@
                     <input class="form-check-input" type="checkbox" name="remote" id="remoteCheck" {% if request.GET.remote %}checked{% endif %}>
                     <label class="form-check-label" for="remoteCheck">Remote Work</label>
                 </div>
+
+                
 
                 <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
                 <a href="{% url 'jobs:job_list' %}" class="btn btn-outline-secondary w-100 mt-2">Reset</a>
@@ -125,6 +147,35 @@
             marker.bindPopup(popupContent);
         {% endif %}
     {% endfor %}
+    
+    // Function: Bring my location[추가] 내 위치 가져오기 기능
+    function getLocation() {
+        if (navigator.geolocation) {
+            // Request location authority to brower
+            navigator.geolocation.getCurrentPosition(showPosition, showError);
+        } else {
+            alert("Geolocation is not supported by this browser.");
+        }
+    }
+
+    function showPosition(position) {
+        // 1. Fill latitude, longitude at hidden input block
+        document.getElementById("user_lat").value = position.coords.latitude;
+        document.getElementById("user_lon").value = position.coords.longitude;
+        
+        // 2. Success alert
+        alert("Location found! Select a distance and click 'Apply Filters'.");
+    }
+
+    function showError(error) {
+        switch(error.code) {
+            case error.PERMISSION_DENIED:
+                alert("Please allow location access to use this feature.");
+                break;
+            default:
+                alert("An unknown error occurred.");
+        }
+    }
 </script>
 
 {% endblock content %}
