@@ -1,10 +1,16 @@
 {% extends "base.html" %}
 {% block content %}
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
 <div class="container-fluid mt-4">
     <div class="row">
         <div class="col-md-3 border-end">
             <h4 class="mb-3">Filters</h4>
             <form method="GET" action="{% url 'jobs:job_list' %}">
+
+
                 <div class="mb-3">
                     <label class="form-label">Search</label>
                     <input type="text" name="title" class="form-control" placeholder="Job title or skills..." value="{{ request.GET.title }}">
@@ -13,6 +19,24 @@
                 <div class="mb-3">
                     <label class="form-label">Location</label>
                     <input type="text" name="location" class="form-control" placeholder="City or State" value="{{ request.GET.location }}">
+                </div>
+
+                <input type="hidden" id="user_lat" name="lat" value="{{ request.GET.lat }}">
+                <input type="hidden" id="user_lon" name="lon" value="{{ request.GET.lon }}">
+
+                <div class="mb-3">
+                    <label class="form-label">Distance from me</label>
+                    <div class="input-group mb-2">
+                        <select name="radius" class="form-select">
+                            <option value="">Any</option>
+                            <option value="10" {% if request.GET.radius == '10' %}selected{% endif %}>10 mi</option>
+                            <option value="25" {% if request.GET.radius == '25' %}selected{% endif %}>25 mi</option>
+                            <option value="50" {% if request.GET.radius == '50' %}selected{% endif %}>50 mi</option>
+                        </select>
+                        <button type="button" class="btn btn-outline-success" onclick="getLocation()" title="Use my location">
+                            📍
+                        </button>
+                    </div>
                 </div>
 
                 <div class="mb-3">
@@ -30,6 +54,8 @@
                     <label class="form-check-label" for="remoteCheck">Remote Work</label>
                 </div>
 
+                
+
                 <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
                 <a href="{% url 'jobs:job_list' %}" class="btn btn-outline-secondary w-100 mt-2">Reset</a>
             </form>
@@ -37,6 +63,9 @@
 
         <div class="col-md-9">
             <h2 class="mb-4">Available Jobs</h2>
+
+            <div id="map" style="height: 400px; width: 100%; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ddd; z-index: 1;"></div>
+
             <div class="row">
                 {% for job in jobs %}
                 <div class="col-12 mb-3">
@@ -90,4 +119,63 @@
         </div>
     </div>
 </div>
+
+<script>
+    // 1. Generate map(near GT)
+    var map = L.map('map').setView([33.7756, -84.3963], 13);
+
+    // 2. Call open street map tiles
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri'
+    }).addTo(map);
+
+    // 3. Repeat pinning Django jobs data
+    {% for job in jobs %}
+        // Generate pins if there's only latitude and longitude
+        {% if job.latitude and job.longitude %}
+            var marker = L.marker([{{ job.latitude }}, {{ job.longitude }}]).addTo(map);
+            
+            // Pop up contecnt when you click pin
+            var popupContent = `
+                <div style="text-align:center; min-width: 150px;">
+                    <h6 style="margin:0; font-weight:bold; color:#003057;">{{ job.title|escapejs }}</h6>
+                    <p style="margin:5px 0; color:#545454; font-size:0.9em;">{{ job.company_name|escapejs }}</p>
+                    <span class="badge bg-success">$ {{ job.salary_min }}</span>
+                </div>
+            `;
+            
+            marker.bindPopup(popupContent);
+        {% endif %}
+    {% endfor %}
+    
+    // Function: Bring my location[추가] 내 위치 가져오기 기능
+    function getLocation() {
+        if (navigator.geolocation) {
+            // Request location authority to brower
+            navigator.geolocation.getCurrentPosition(showPosition, showError);
+        } else {
+            alert("Geolocation is not supported by this browser.");
+        }
+    }
+
+    function showPosition(position) {
+        // 1. Fill latitude, longitude at hidden input block
+        document.getElementById("user_lat").value = position.coords.latitude;
+        document.getElementById("user_lon").value = position.coords.longitude;
+        
+        // 2. Success alert
+        alert("Location found! Select a distance and click 'Apply Filters'.");
+    }
+
+    function showError(error) {
+        switch(error.code) {
+            case error.PERMISSION_DENIED:
+                alert("Please allow location access to use this feature.");
+                break;
+            default:
+                alert("An unknown error occurred.");
+        }
+    }
+</script>
+
 {% endblock content %}

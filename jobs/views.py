@@ -6,6 +6,18 @@ from django.db.models import Q
 
 from .models import Job
 from .models import JobApplication
+import math
+
+def calculate_distance(lat1, lon1, lat2, lon2):
+    R = 3958.8  # Earch radius (in miles)
+    
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = math.sin(dlat / 2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    
+    return R * c
+
 
 def job_list(request):
     jobs = Job.objects.all()
@@ -32,6 +44,28 @@ def job_list(request):
         jobs = jobs.filter(salary_min__gte=min_salary)
     if visa_support == 'on':
         jobs = jobs.filter(visa_sponsorship=True)
+
+    # --- [User Story 8] Distance Filtering logic
+    user_lat = request.GET.get('lat')
+    user_lon = request.GET.get('lon')
+    radius = request.GET.get('radius')  # User can choose radius
+
+    if user_lat and user_lon and radius:
+        try:
+            user_lat = float(user_lat)
+            user_lon = float(user_lon)
+            radius = float(radius)
+            
+            filtered_jobs = []
+            for job in jobs:
+                if job.latitude and job.longitude:
+                    dist = calculate_distance(user_lat, user_lon, job.latitude, job.longitude)
+                    if dist <= radius:
+                        filtered_jobs.append(job)
+            
+            jobs = filtered_jobs  # Replace lists with closer jobs
+        except ValueError:
+            pass
 
     return render(request, 'jobs/jobs_list.html', {'jobs': jobs})
 
