@@ -122,3 +122,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 AUTH_USER_MODEL = 'accounts.User'
+
+# User Story #14: Email Configuration
+# Use console backend so emails print to terminal
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
