@@ -6,10 +6,12 @@ from django.contrib import messages
 from django.db.models import Q
 from django.shortcuts import render
 from django.http import JsonResponse
-from .models import JobSeekerProfile
-from .models import User, JobSeekerProfile, Skill, Connection
+from .models import User, JobSeekerProfile, Skill, Connection, SavedSearch
 from django.core.mail import send_mail
 from django.conf import settings
+from django.urls import reverse
+from urllib.parse import urlencode
+from django.utils import timezone
 from .forms import (
     CustomUserCreationForm,
     CustomErrorList,
@@ -385,25 +387,97 @@ def connections_list(request):
     }
     return render(request, 'accounts/connections.html', context)
 
+# User Story #15: saved searches
+@login_required
 def candidate_search(request):
-    candidates = JobSeekerProfile.objects.filter(profile_visibility='public')
-    location_query = request.GET.get('location')
-    skill_query = request.GET.get('skill')
-    project_query = request.GET.get('project')
+    if request.user.role != 'recruiter':
+        return redirect('home.index')
+    skill    = request.GET.get('skill', '').strip()
+    location = request.GET.get('location', '').strip()
+    project  = request.GET.get('project', '').strip()
+    profiles = JobSeekerProfile.objects.filter(profile_visibility='public',user__role='job_seeker').select_related('user')
 
-    if location_query:
-        candidates = candidates.filter(location__icontains=location_query)
-        
-    if skill_query:
-        candidates = candidates.filter(skills__name__icontains=skill_query).distinct()
-        
-    if project_query:
-        candidates = candidates.filter(
-            Q(about__icontains=project_query) | 
-            Q(experience_items__description__icontains=project_query)
+    if skill:
+        profiles = profiles.filter(skills__name__icontains=skill).distinct()
+    if location:
+        profiles = profiles.filter(location__icontains=location)
+    if project:
+        profiles = profiles.filter(
+            Q(experience_items__description__icontains=project) |
+            Q(experience_items__title__icontains=project) |
+            Q(about__icontains=project)
         ).distinct()
 
-    return render(request, 'accounts/candidate_list.html', {'candidates': candidates})
+    saved_search = None
+    new_match_ids = set()
+    is_new_search = False
+    saved_search_id = request.GET.get('saved_search_id')
+
+    if saved_search_id:
+        saved_search = get_object_or_404(SavedSearch, id=saved_search_id, recruiter=request.user)
+        is_new_search = saved_search.last_checked == saved_search.created_at
+
+        if is_new_search:
+            new_match_ids = set(profiles.values_list('id', flat=True))
+        else:
+            new_match_ids = set(profiles.filter(updated_at__gt=saved_search.last_checked).values_list('id', flat=True))
+
+        SavedSearch.objects.filter(pk=saved_search.pk).update(last_checked=timezone.now())
+
+    candidate_list = []
+    for profile in profiles:
+        profile.is_new_match = profile.id in new_match_ids
+        candidate_list.append(profile)
+
+    # Recruiter's saved searches (for the panel)
+    my_saved_searches = SavedSearch.objects.filter(recruiter=request.user)
+
+    return render(request, 'accounts/candidate_list.html', {
+        'candidates': candidate_list,
+        'my_saved_searches': my_saved_searches,
+        'saved_search': saved_search,
+        'is_new_search': is_new_search,
+        'current_skill': skill,
+        'current_location': location,
+        'current_project': project,
+    })
+
+
+# User Story #15: save a search
+@login_required
+def save_search(request):
+    if request.user.role != 'recruiter' or request.method != 'POST':
+        return redirect('candidate_search')
+    name = request.POST.get('name', '').strip()
+    skill = request.POST.get('skill', '').strip()
+    location = request.POST.get('location', '').strip()
+    project = request.POST.get('project', '').strip()
+    if name:
+        SavedSearch.objects.create(
+            recruiter=request.user,
+            name=name,
+            skill=skill,
+            location=location,
+            project=project,
+        )
+    params = {}
+    if skill:    params['skill']    = skill
+    if location: params['location'] = location
+    if project:  params['project']  = project
+    base = reverse('candidate_search')
+    qs = urlencode(params)
+    return redirect(f"{base}?{qs}" if qs else base)
+
+
+# User Story #15: delete a saved search
+@login_required
+def delete_saved_search(request, search_id):
+    if request.user.role != 'recruiter' or request.method != 'POST':
+        return redirect('candidate_search')
+
+    saved_search = get_object_or_404(SavedSearch, id=search_id, recruiter=request.user)
+    saved_search.delete()
+    return redirect('candidate_search')
 
 # User Story #14: Email Candidate View
 @login_required

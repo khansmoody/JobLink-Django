@@ -2,73 +2,140 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2>Find Candidates</h2>
-    
-    <form method="GET" action="{% url 'candidate_search' %}" class="row g-3 mb-4">
-        <div class="col-md-3">
-            <input type="text" name="skill" class="form-control" placeholder="Skills (e.g., Python)" value="{{ request.GET.skill }}">
-        </div>
-        <div class="col-md-3">
-            <input type="text" name="location" class="form-control" placeholder="Location (e.g., Atlanta)" value="{{ request.GET.location }}">
-        </div>
-        <div class="col-md-4">
-            <input type="text" name="project" class="form-control" placeholder="Projects or Experience" value="{{ request.GET.project }}">
-        </div>
-        <div class="col-md-2">
-            <button type="submit" class="btn btn-primary w-100">Search</button>
-        </div>
-    </form>
-
-    <hr>
-
-    <!-- User Story #14: Email success message display -->
-    <div id="email-success-message" class="alert alert-success alert-dismissible fade show d-none" role="alert">
-        <i class="fas fa-check-circle me-2"></i>
-        <span id="email-success-text"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-
     <div class="row">
-        {% for candidate in candidates %}
-            <div class="col-md-4 mb-3">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ candidate.display_name }}</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">{{ candidate.headline }}</h6>
-                        <p class="card-text">
-                            <strong>Location:</strong> {{ candidate.location|default:"Not specified" }}<br>
-                        </p>
-                        <div class="d-flex gap-2 flex-wrap">
-                            <a href="{% url 'accounts.profile_user' candidate.user.username %}" 
-                               class="btn btn-sm btn-outline-secondary">
-                                <i class="fas fa-eye me-1"></i>View Profile
-                            </a>
-                            
-                            <!-- User Story 13: In-platform messaging -->
-                            <a href="{% url 'messaging:start_conversation' candidate.user.id %}"
-                                class="btn btn-sm btn-primary">
-                                <i class="fas fa-comment me-1"></i>Message
-                            </a>
-                            
-                            <!-- User Story #14: Email button -->
-                            <button class="btn btn-sm text-white" style="background:#EAAA00;" 
-                                    onclick="openEmailPopup('{{ candidate.user.username }}', '{{ candidate.user.email }}', '{{ candidate.display_name }}')">
-                                <i class="fas fa-envelope me-1"></i>Email
-                            </button>
+        <div class="col-12">
+            <h2>Find Candidates</h2>
+            <form method="GET" action="{% url 'candidate_search' %}" class="row g-3 mb-3">
+                <div class="col-md-3">
+                    <input type="text" name="skill" class="form-control" placeholder="Skills (e.g., Python)" value="{{ current_skill }}">
+                </div>
+                <div class="col-md-3">
+                    <input type="text" name="location" class="form-control" placeholder="Location (e.g., Atlanta)" value="{{ current_location }}">
+                </div>
+                <div class="col-md-4">
+                    <input type="text" name="project" class="form-control" placeholder="Projects or Experience" value="{{ current_project }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Search</button>
+                </div>
+            </form>
+            {% if my_saved_searches %}
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header text-white py-2" style="background:#003057;">
+                        <h6 class="mb-0"><i class="fas fa-bookmark me-2"></i>Saved Searches</h6>
+                    </div>
+                    <div class="card-body py-2 px-3">
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for ss in my_saved_searches %}
+                                <div class="d-flex align-items-center gap-1 px-2 py-1 rounded
+                                            {% if saved_search and saved_search.id == ss.id %}border border-warning{% endif %}"
+                                     style="background:#EAAA00;">
+                                    <a href="{% url 'candidate_search' %}?saved_search_id={{ ss.id }}&skill={{ ss.skill }}&location={{ ss.location }}&project={{ ss.project }}"
+                                       class="text-decoration-none" style="color:#003057;">
+                                        <span class="fw-semibold small">{{ ss.name }}</span>
+                                    </a>
+                                    <form method="POST" action="{% url 'delete_saved_search' ss.id %}"
+                                          onsubmit="return confirm('Delete this saved search?');"
+                                          class="mb-0">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-link text-danger p-0 ms-1"
+                                                title="Delete">
+                                            <i class="fas fa-times" style="font-size:0.75rem;"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            {% endfor %}
                         </div>
                     </div>
                 </div>
+            {% endif %}
+
+            {% if current_skill or current_location or current_project %}
+                <div class="card mb-3 border-0" style="background:#fffbea;">
+                    <div class="card-body py-2 px-3">
+                        <form method="POST" action="{% url 'save_search' %}" class="d-flex align-items-center gap-2 flex-wrap">
+                            {% csrf_token %}
+                            <input type="hidden" name="skill"     value="{{ current_skill }}">
+                            <input type="hidden" name="location"  value="{{ current_location }}">
+                            <input type="hidden" name="project"   value="{{ current_project }}">
+                            <i class="fas fa-bookmark" style="color:#EAAA00;"></i>
+                            <input type="text" name="name" class="form-control form-control-sm"
+                                   style="max-width:220px;"
+                                   placeholder="Name this search…" required>
+                            <button type="submit" class="btn btn-sm text-white" style="background:#EAAA00;">
+                                Save Search
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if saved_search %}
+                <div class="alert alert-info py-2 mb-3">
+                    <i class="fas fa-bookmark me-2"></i>
+                    Running saved search: <strong>{{ saved_search.name }}</strong>
+                    {% if is_new_search %}
+                        — this is your first run, so all results are
+                        <span class="badge text-white" style="background:#EAAA00;">New To You!</span>.
+                    {% else %}
+                        — candidates marked
+                        <span class="badge text-white" style="background:#EAAA00;">New To You!</span>
+                        have updated their profile since you last ran this search.
+                    {% endif %}
+                </div>
+            {% endif %}
+            <hr>
+            <div id="email-success-message" class="alert alert-success alert-dismissible fade show d-none" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                <span id="email-success-text"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
-        {% empty %}
-            <div class="col-12">
-                <p class="text-muted">No candidates found matching your criteria.</p>
+            <div class="row" id="candidate-results">
+                {% for candidate in candidates %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100 {% if candidate.is_new_match %}border-warning{% endif %}">
+                            <div class="card-body">
+                                {% if candidate.is_new_match %}
+                                    <span class="badge text-white mb-2" style="background:#EAAA00;">
+                                        <i class="fas fa-star me-1"></i>New To You!
+                                    </span>
+                                {% endif %}
+
+                                <h5 class="card-title">{{ candidate.display_name }}</h5>
+                                <h6 class="card-subtitle mb-2 text-muted">{{ candidate.headline }}</h6>
+                                <p class="card-text">
+                                    <strong>Location:</strong> {{ candidate.location|default:"Not specified" }}
+                                </p>
+
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <a href="{% url 'accounts.profile_user' candidate.user.username %}"
+                                       class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-eye me-1"></i>View Profile
+                                    </a>
+                                    <a href="{% url 'messaging:start_conversation' candidate.user.id %}"
+                                       class="btn btn-sm btn-primary">
+                                        <i class="fas fa-comment me-1"></i>Message
+                                    </a>
+                                    <button class="btn btn-sm text-white" style="background:#EAAA00;"
+                                            onclick="openEmailPopup('{{ candidate.user.username }}', '{{ candidate.user.email }}', '{{ candidate.display_name }}')">
+                                        <i class="fas fa-envelope me-1"></i>Email
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-12">
+                        <p class="text-muted">No candidates found matching your criteria.</p>
+                    </div>
+                {% endfor %}
             </div>
-        {% endfor %}
+        </div>
     </div>
 </div>
-
-<!-- User Story #14: Email Popup (should be on bottom-right corner) -->
-<div id="email-popup" class="card shadow-lg" style="display:none; position:fixed; bottom:20px; right:20px; width:500px; z-index:9999;">
+<div id="email-popup" class="card shadow-lg"
+     style="display:none; position:fixed; bottom:20px; right:20px; width:500px; z-index:9999;">
     <div class="card-header text-white d-flex justify-content-between align-items-center" style="background:#003057;">
         <h6 class="mb-0"><i class="fas fa-envelope me-2"></i>New Email</h6>
         <button type="button" class="btn-close btn-close-white" onclick="closeEmailPopup()"></button>
@@ -77,19 +144,21 @@
         <form id="email-form">
             {% csrf_token %}
             <input type="hidden" id="email-username" name="username">
-            
+
             <div class="mb-3">
                 <strong>To:</strong> <span id="email-recipient" style="color:#003057;"></span>
             </div>
-            
+
             <div class="mb-3">
-                <input type="text" id="email-subject" name="subject" class="form-control" placeholder="Subject" required>
+                <input type="text" id="email-subject" name="subject" class="form-control"
+                       placeholder="Subject" required>
             </div>
             
             <div class="mb-3">
-                <textarea id="email-message" name="message" class="form-control" rows="8" placeholder="Write your message..." required></textarea>
+                <textarea id="email-message" name="message" class="form-control" rows="8"
+                          placeholder="Write your message..." required></textarea>
             </div>
-            
+
             <div class="d-flex gap-2">
                 <button type="submit" class="btn text-white" style="background:#EAAA00;">
                     <i class="fas fa-paper-plane me-2"></i>Send
@@ -105,13 +174,13 @@
     </div>
 </div>
 
-<!-- User Story #14: Email Popup JavaScript -->
 <script>
 function openEmailPopup(username, email, displayName) {
     document.getElementById('email-username').value = username;
     document.getElementById('email-recipient').textContent = displayName + ' (' + email + ')';
     document.getElementById('email-subject').value = 'Opportunity from {{ user.username }} on JobLink';
-    document.getElementById('email-message').value = `Hi ${displayName},\n\nI came across your profile on JobLink and I'm impressed by your background.\n\n[Add your personalized message here]\n\nLooking forward to hearing from you!`;
+    document.getElementById('email-message').value =
+        `Hi ${displayName},\n\nI came across your profile on JobLink and I'm impressed by your background.\n\n[Add your personalized message here]\n\nLooking forward to hearing from you!`;
     document.getElementById('email-popup').style.display = 'block';
 }
 
@@ -127,43 +196,29 @@ function clearEmailForm() {
 
 document.getElementById('email-form').addEventListener('submit', function(e) {
     e.preventDefault();
-    
-    const username = document.getElementById('email-username').value;
-    const subject = document.getElementById('email-subject').value;
-    const message = document.getElementById('email-message').value;
+    const username  = document.getElementById('email-username').value;
+    const subject   = document.getElementById('email-subject').value;
+    const message   = document.getElementById('email-message').value;
     const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-
     fetch(`/accounts/email/${username}/`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'X-CSRFToken': csrftoken
-        },
-        body: new URLSearchParams({
-            'subject': subject,
-            'message': message
-        })
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrftoken },
+        body: new URLSearchParams({ 'subject': subject, 'message': message })
     })
-    .then(response => response.json())
+    .then(r => r.json())
     .then(data => {
         if (data.success) {
             closeEmailPopup();
-            const successMsg = document.getElementById('email-success-message');
-            const successText = document.getElementById('email-success-text');
-            successText.textContent = data.message;
-            successMsg.classList.remove('d-none');
-            setTimeout(() => {
-                successMsg.classList.add('d-none');
-            }, 5000);
-            window.scrollTo({top: 0, behavior: 'smooth'});
+            const box  = document.getElementById('email-success-message');
+            document.getElementById('email-success-text').textContent = data.message;
+            box.classList.remove('d-none');
+            setTimeout(() => box.classList.add('d-none'), 5000);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
             alert('Error: ' + data.error);
         }
     })
-    .catch(error => {
-        alert('Failed to send email. Please try again.');
-        console.error('Error:', error);
-    });
+    .catch(() => alert('Failed to send email. Please try again.'));
 });
 </script>
 {% endblock %}
