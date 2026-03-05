@@ -277,3 +277,27 @@ class ExternalLink(models.Model):
 
     def __str__(self):
         return self.label
+
+# User Story 15: Save Candidate Search
+class SavedSearch(models.Model):
+    recruiter = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='saved_searches'
+    )
+    name = models.CharField(max_length=120)
+    skill = models.CharField(max_length=100, blank=True)
+    location = models.CharField(max_length=100, blank=True)
+    project = models.CharField(max_length=100, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    # Every time the recruiter *opens* this saved search we update this field
+    # Profiles whose `updated_at` > last_checked are considered "new matches"
+    last_checked = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.name} (by {self.recruiter.username})"
