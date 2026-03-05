@@ -5,8 +5,11 @@ from django.core.exceptions import PermissionDenied
 from django.contrib import messages
 from django.db.models import Q
 from django.shortcuts import render
+from django.http import JsonResponse
 from .models import JobSeekerProfile
 from .models import User, JobSeekerProfile, Skill, Connection
+from django.core.mail import send_mail
+from django.conf import settings
 from .forms import (
     CustomUserCreationForm,
     CustomErrorList,
@@ -18,6 +21,7 @@ from .forms import (
     ExternalLinkFormSet,
     PrivacySettingsForm,
     AccountSettingsForm,
+    EmailCandidateForm,
 )
 
 # Logout
@@ -400,3 +404,43 @@ def candidate_search(request):
         ).distinct()
 
     return render(request, 'accounts/candidate_list.html', {'candidates': candidates})
+
+# User Story #14: Email Candidate View
+@login_required
+def send_email_to_candidate(request, username):
+    if request.user.role != 'recruiter':
+        return JsonResponse({'success': False, 'error': 'Only recruiters can email candidates.'})
+    try:
+        candidate = User.objects.get(username=username)
+    except User.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Candidate not found.'})
+    candidate_email = candidate.email
+    if not candidate_email:
+        return JsonResponse({'success': False, 'error': 'Candidate has no email address.'})
+    if request.method == 'POST':
+        form = EmailCandidateForm(request.POST)
+        if form.is_valid():
+            subject = form.cleaned_data['subject']
+            message_body = form.cleaned_data['message']
+            full_message = f"{message_body}\n\n"
+            full_message += f"---\n"
+            full_message += f"Sent by {request.user.first_name or request.user.username}\n"
+            full_message += f"Recruiter on JobLink Platform"
+            
+            try:
+                send_mail(
+                    subject=subject,
+                    message=full_message,
+                    from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@joblink.com'),
+                    recipient_list=[candidate_email],
+                    fail_silently=False,
+                )
+                return JsonResponse({
+                    'success': True, 
+                    'message': f'Email sent to {candidate.username} ({candidate_email})'
+                })
+            except Exception as e:
+                return JsonResponse({'success': False, 'error': f'Failed to send: {str(e)}'})
+        else:
+            return JsonResponse({'success': False, 'error': 'Invalid form data'})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})

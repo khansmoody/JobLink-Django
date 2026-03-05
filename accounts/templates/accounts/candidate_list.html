@@ -6,13 +6,13 @@
     
     <form method="GET" action="{% url 'candidate_search' %}" class="row g-3 mb-4">
         <div class="col-md-3">
-            <input type="text" name="skill" class="form-control" placeholder="Skills (e.g., Python)">
+            <input type="text" name="skill" class="form-control" placeholder="Skills (e.g., Python)" value="{{ request.GET.skill }}">
         </div>
         <div class="col-md-3">
-            <input type="text" name="location" class="form-control" placeholder="Location (e.g., Atlanta)">
+            <input type="text" name="location" class="form-control" placeholder="Location (e.g., Atlanta)" value="{{ request.GET.location }}">
         </div>
         <div class="col-md-4">
-            <input type="text" name="project" class="form-control" placeholder="Projects or Experience">
+            <input type="text" name="project" class="form-control" placeholder="Projects or Experience" value="{{ request.GET.project }}">
         </div>
         <div class="col-md-2">
             <button type="submit" class="btn btn-primary w-100">Search</button>
@@ -20,6 +20,13 @@
     </form>
 
     <hr>
+
+    <!-- User Story #14: Email success message display -->
+    <div id="email-success-message" class="alert alert-success alert-dismissible fade show d-none" role="alert">
+        <i class="fas fa-check-circle me-2"></i>
+        <span id="email-success-text"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
 
     <div class="row">
         {% for candidate in candidates %}
@@ -31,12 +38,24 @@
                         <p class="card-text">
                             <strong>Location:</strong> {{ candidate.location|default:"Not specified" }}<br>
                         </p>
-                        <a href="{% url 'accounts.profile_user' candidate.user.username %}" class="btn btn-sm btn-outline-secondary">View Profile</a>
-                        <a href="{% url 'messaging:start_conversation' candidate.user.id %}"
-                            class="btn btn-sm btn-primary ms-2">
-                            Message
-                        </a>
-
+                        <div class="d-flex gap-2 flex-wrap">
+                            <a href="{% url 'accounts.profile_user' candidate.user.username %}" 
+                               class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-eye me-1"></i>View Profile
+                            </a>
+                            
+                            <!-- User Story 13: In-platform messaging -->
+                            <a href="{% url 'messaging:start_conversation' candidate.user.id %}"
+                                class="btn btn-sm btn-primary">
+                                <i class="fas fa-comment me-1"></i>Message
+                            </a>
+                            
+                            <!-- User Story #14: Email button -->
+                            <button class="btn btn-sm text-white" style="background:#EAAA00;" 
+                                    onclick="openEmailPopup('{{ candidate.user.username }}', '{{ candidate.user.email }}', '{{ candidate.display_name }}')">
+                                <i class="fas fa-envelope me-1"></i>Email
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -47,4 +66,104 @@
         {% endfor %}
     </div>
 </div>
+
+<!-- User Story #14: Email Popup (should be on bottom-right corner) -->
+<div id="email-popup" class="card shadow-lg" style="display:none; position:fixed; bottom:20px; right:20px; width:500px; z-index:9999;">
+    <div class="card-header text-white d-flex justify-content-between align-items-center" style="background:#003057;">
+        <h6 class="mb-0"><i class="fas fa-envelope me-2"></i>New Email</h6>
+        <button type="button" class="btn-close btn-close-white" onclick="closeEmailPopup()"></button>
+    </div>
+    <div class="card-body">
+        <form id="email-form">
+            {% csrf_token %}
+            <input type="hidden" id="email-username" name="username">
+            
+            <div class="mb-3">
+                <strong>To:</strong> <span id="email-recipient" style="color:#003057;"></span>
+            </div>
+            
+            <div class="mb-3">
+                <input type="text" id="email-subject" name="subject" class="form-control" placeholder="Subject" required>
+            </div>
+            
+            <div class="mb-3">
+                <textarea id="email-message" name="message" class="form-control" rows="8" placeholder="Write your message..." required></textarea>
+            </div>
+            
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn text-white" style="background:#EAAA00;">
+                    <i class="fas fa-paper-plane me-2"></i>Send
+                </button>
+                <button type="button" class="btn btn-outline-secondary" onclick="clearEmailForm()">
+                    <i class="fas fa-eraser me-2"></i>Clear
+                </button>
+                <button type="button" class="btn btn-outline-danger" onclick="closeEmailPopup()">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- User Story #14: Email Popup JavaScript -->
+<script>
+function openEmailPopup(username, email, displayName) {
+    document.getElementById('email-username').value = username;
+    document.getElementById('email-recipient').textContent = displayName + ' (' + email + ')';
+    document.getElementById('email-subject').value = 'Opportunity from {{ user.username }} on JobLink';
+    document.getElementById('email-message').value = `Hi ${displayName},\n\nI came across your profile on JobLink and I'm impressed by your background.\n\n[Add your personalized message here]\n\nLooking forward to hearing from you!`;
+    document.getElementById('email-popup').style.display = 'block';
+}
+
+function closeEmailPopup() {
+    document.getElementById('email-popup').style.display = 'none';
+    clearEmailForm();
+}
+
+function clearEmailForm() {
+    document.getElementById('email-subject').value = '';
+    document.getElementById('email-message').value = '';
+}
+
+document.getElementById('email-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const username = document.getElementById('email-username').value;
+    const subject = document.getElementById('email-subject').value;
+    const message = document.getElementById('email-message').value;
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    fetch(`/accounts/email/${username}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrftoken
+        },
+        body: new URLSearchParams({
+            'subject': subject,
+            'message': message
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeEmailPopup();
+            const successMsg = document.getElementById('email-success-message');
+            const successText = document.getElementById('email-success-text');
+            successText.textContent = data.message;
+            successMsg.classList.remove('d-none');
+            setTimeout(() => {
+                successMsg.classList.add('d-none');
+            }, 5000);
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Failed to send email. Please try again.');
+        console.error('Error:', error);
+    });
+});
+</script>
 {% endblock %}

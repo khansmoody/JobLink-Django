@@ -18,4 +18,5 @@ urlpatterns = [
     path('candidates/', views.candidate_search, name='candidate_search'),
     path("admin/users/", views_admin.user_list, name="admin_user_list"),
     path("admin/users/<int:user_id>/role/", views_admin.update_role, name="admin_update_role"),
+    path('email/<str:username>/', views.send_email_to_candidate, name='email_candidate'),
 ]

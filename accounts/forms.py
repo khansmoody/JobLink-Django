@@ -297,3 +297,41 @@ ExternalLinkFormSet = inlineformset_factory(JobSeekerProfile, ExternalLink, form
 
 CustomUserCreationForm = SignUpForm
 SignupForm = SignUpForm
+
+# User Story #14: Email Candidate Form
+class EmailCandidateForm(BootstrapErrorMixin, forms.Form):
+    subject = forms.CharField(
+        max_length=200,
+        required=True,
+        label='Subject',
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Subject',
+            'class': 'form-control'
+        })
+    )
+    
+    message = forms.CharField(
+        required=True,
+        label='Message',
+        widget=forms.Textarea(attrs={
+            'rows': 8,
+            'placeholder': 'Write your message here...',
+            'class': 'form-control'
+        })
+    )
+    
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("error_class", CustomErrorList)
+        super().__init__(*args, **kwargs)
+    
+    def clean_subject(self):
+        subject = (self.cleaned_data.get('subject') or '').strip()
+        if len(subject) < 3:
+            raise forms.ValidationError("Subject must be at least 3 characters.")
+        return subject
+    
+    def clean_message(self):
+        message = (self.cleaned_data.get('message') or '').strip()
+        if len(message) < 10:
+            raise forms.ValidationError("Message must be at least 10 characters.")
+        return message
