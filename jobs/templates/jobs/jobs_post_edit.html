@@ -1,7 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-- User Story #10 -->
+<!-- US#17 — Leaflet CSS + JS added for the map pin feature (not in original file) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+<!-- US#10 — job post / edit form -->
 <div class="container mt-4">
     <div class="row justify-content-center">
         <div class="col-md-8">
@@ -11,7 +15,7 @@
                     <form method="POST" action="">
                         {% csrf_token %}
 
-                        <!-- Job Title -->
+                        <!-- US#10 — job title -->
                         <div class="mb-3">
                             <label class="form-label">Job Title</label>
                             <input type="text" name="title" class="form-control"
@@ -19,7 +23,7 @@
                                 value="{{ job.title|default:'' }}" required>
                         </div>
 
-                        <!-- Company Name -->
+                        <!-- US#10 — company name -->
                         <div class="mb-3">
                             <label class="form-label">Company Name</label>
                             <input type="text" name="company_name" class="form-control"
@@ -27,15 +31,73 @@
                                 value="{{ job.company_name|default:'' }}" required>
                         </div>
 
-                        <!-- Location -->
+                        <!-- US#10 — location text field
+                             US#17 — updated label to "Company Address" and placeholder
+                             to full address format to guide recruiter when setting pin -->
                         <div class="mb-3">
-                            <label class="form-label">Location</label>
+                            <label class="form-label">Company Address</label>
                             <input type="text" name="location" class="form-control"
-                                placeholder="e.g. Atlanta, GA"
+                                placeholder="e.g. 725 Ponce De Leon Ave NE, Atlanta, GA 30306"
                                 value="{{ job.location|default:'' }}" required>
+                            <small class="text-muted">Shown on the job listing and used for location search.</small>
                         </div>
 
-                        <!-- Description -->
+                        <!-- US#17 — entire map pin section; not in original file
+                             lets recruiter enter coordinates or click the map to pin the office location -->
+                        <div class="mb-4 p-3 rounded" style="background:#f8f9fa; border:1px solid #dee2e6;">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-map-marker-alt me-1" style="color:#003057;"></i>
+                                Pin Office Location on Map <span class="text-muted fw-normal">(optional)</span>
+                            </label>
+                            <small class="text-muted d-block mb-3">
+                                Enter the coordinates to drop a pin on the map so candidates can see exactly where the office is.
+                                Find coordinates at
+                                <a href="https://www.google.com/maps" target="_blank" rel="noopener">Google Maps</a>
+                                by right-clicking any location → the first number is latitude, second is longitude.
+                                You can also click directly on the map.
+                            </small>
+
+                            <!-- US#17 — lat/lng number inputs; typing here moves the map pin -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <label class="form-label small mb-1">Latitude</label>
+                                    <input type="number" step="any" id="lat-input" class="form-control"
+                                        placeholder="e.g. 33.771320"
+                                        value="{{ job.latitude|default:'' }}"
+                                        oninput="onCoordsTyped()">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small mb-1">Longitude</label>
+                                    <input type="number" step="any" id="lng-input" class="form-control"
+                                        placeholder="e.g. -84.361070"
+                                        value="{{ job.longitude|default:'' }}"
+                                        oninput="onCoordsTyped()">
+                                </div>
+                            </div>
+
+                            <!-- US#17 — Leaflet map; click anywhere to place or move the pin -->
+                            <div id="pin-map" style="height:300px; border-radius:8px; border:1px solid #dee2e6;"></div>
+
+                            <!-- US#17 — hidden fields submitted with the form and saved as lat/lon on the Job model -->
+                            <input type="hidden" name="latitude"  id="latitude"  value="{{ job.latitude|default:'' }}">
+                            <input type="hidden" name="longitude" id="longitude" value="{{ job.longitude|default:'' }}">
+
+                            <div class="d-flex align-items-center justify-content-between mt-2">
+                                <div id="pin-status" class="text-muted small">
+                                    {% if job.latitude and job.longitude %}
+                                        📍 Pinned at {{ job.latitude }}, {{ job.longitude }}
+                                    {% else %}
+                                        No pin set — enter coordinates above or click the map.
+                                    {% endif %}
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearPin()">
+                                    <i class="fas fa-times me-1"></i>Clear Pin
+                                </button>
+                            </div>
+                        </div>
+                        <!-- end US#17 map pin section -->
+
+                        <!-- US#10 — job description -->
                         <div class="mb-3">
                             <label class="form-label">Job Description</label>
                             <textarea name="description" class="form-control" rows="5"
@@ -43,7 +105,7 @@
                                 required>{{ job.description|default:'' }}</textarea>
                         </div>
 
-                        <!-- Skills -->
+                        <!-- US#10 — required skills -->
                         <div class="mb-3">
                             <label class="form-label">Required Skills</label>
                             <input type="text" name="skills" class="form-control"
@@ -51,17 +113,17 @@
                                 value="{{ job.skills|default:'' }}">
                         </div>
 
-                        <!-- Work Type -->
+                        <!-- US#10 — work type -->
                         <div class="mb-3">
                             <label class="form-label">Work Type</label>
                             <select name="work_type" class="form-control">
-                                <option value="onsite"  {% if job.work_type == 'onsite'  %}selected{% endif %}>On-site</option>
-                                <option value="remote"  {% if job.work_type == 'remote'  %}selected{% endif %}>Remote</option>
-                                <option value="hybrid"  {% if job.work_type == 'hybrid'  %}selected{% endif %}>Hybrid</option>
+                                <option value="onsite" {% if job.work_type == 'onsite' %}selected{% endif %}>On-site</option>
+                                <option value="remote" {% if job.work_type == 'remote' %}selected{% endif %}>Remote</option>
+                                <option value="hybrid" {% if job.work_type == 'hybrid' %}selected{% endif %}>Hybrid</option>
                             </select>
                         </div>
 
-                        <!-- Salary Range -->
+                        <!-- US#10 — salary range -->
                         <div class="row mb-3">
                             <div class="col-6">
                                 <label class="form-label">Minimum Salary ($)</label>
@@ -77,7 +139,7 @@
                             </div>
                         </div>
 
-                        <!-- Visa Sponsorship -->
+                        <!-- US#10 — visa sponsorship checkbox -->
                         <div class="form-check mb-4">
                             <input class="form-check-input" type="checkbox"
                                 name="visa_sponsorship" id="visaCheck"
@@ -85,7 +147,7 @@
                             <label class="form-check-label" for="visaCheck">Visa Sponsorship Available</label>
                         </div>
 
-                        <!-- Buttons -->
+                        <!-- US#10 — submit / cancel buttons -->
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary">
                                 {% if job %}Update Job{% else %}Post Job{% endif %}
@@ -96,8 +158,79 @@
                     </form>
                 </div>
             </div>
-
         </div>
     </div>
 </div>
+
+<script>
+    // US#17 — entire script block; original file had no JS
+    // sets up the Leaflet map, handles pin placement, keeps hidden fields in sync
+
+    var initLat  = parseFloat("{{ job.latitude|default:'33.7756' }}") || 33.7756;
+    var initLng  = parseFloat("{{ job.longitude|default:'-84.3963' }}") || -84.3963;
+    var initZoom = {% if job.latitude %}14{% else %}12{% endif %};
+
+    var pinMap = L.map('pin-map').setView([initLat, initLng], initZoom);
+    L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+        { attribution: 'Tiles &copy; Esri' }
+    ).addTo(pinMap);
+
+    var pin = null;
+
+    // if editing a job that already has a pin, show it on load
+    {% if job.latitude and job.longitude %}
+        pin = L.marker([{{ job.latitude }}, {{ job.longitude }}], { draggable: true }).addTo(pinMap);
+        pin.on('dragend', syncFromPin);
+    {% endif %}
+
+    // click map to place or move pin
+    pinMap.on('click', function(e) {
+        placePin(e.latlng.lat, e.latlng.lng);
+    });
+
+    // typing in the lat/lng inputs moves the pin
+    function onCoordsTyped() {
+        var lat = parseFloat(document.getElementById('lat-input').value);
+        var lng = parseFloat(document.getElementById('lng-input').value);
+        if (!isNaN(lat) && !isNaN(lng) &&
+            lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+            placePin(lat, lng);
+        }
+    }
+
+    function placePin(lat, lng) {
+        if (pin) {
+            pin.setLatLng([lat, lng]);
+        } else {
+            pin = L.marker([lat, lng], { draggable: true }).addTo(pinMap);
+            pin.on('dragend', syncFromPin);
+        }
+        pinMap.setView([lat, lng], 15);
+        syncFromPin();
+    }
+
+    // keeps hidden form fields, visible coord inputs, and status label all in sync
+    function syncFromPin() {
+        var ll  = pin.getLatLng();
+        var lat = ll.lat.toFixed(6);
+        var lng = ll.lng.toFixed(6);
+        document.getElementById('latitude').value  = lat;
+        document.getElementById('longitude').value = lng;
+        document.getElementById('lat-input').value = lat;
+        document.getElementById('lng-input').value = lng;
+        document.getElementById('pin-status').textContent = '📍 Pinned at ' + lat + ', ' + lng;
+    }
+
+    function clearPin() {
+        if (pin) { pinMap.removeLayer(pin); pin = null; }
+        document.getElementById('latitude').value  = '';
+        document.getElementById('longitude').value = '';
+        document.getElementById('lat-input').value = '';
+        document.getElementById('lng-input').value = '';
+        document.getElementById('pin-status').textContent =
+            'No pin set — enter coordinates above or click the map.';
+    }
+</script>
+
 {% endblock content %}
