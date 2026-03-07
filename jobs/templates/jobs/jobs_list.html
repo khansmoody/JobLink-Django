@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 
+<!-- Leaflet CSS + JS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
@@ -10,51 +11,80 @@
             <h4 class="mb-3">Filters</h4>
             <form method="GET" action="{% url 'jobs:job_list' %}">
 
-
+                <!-- keyword search -->
                 <div class="mb-3">
                     <label class="form-label">Search</label>
                     <input type="text" name="title" class="form-control" placeholder="Job title or skills..." value="{{ request.GET.title }}">
                 </div>
 
+                <!-- US#7 — location search; US#8 added state abbreviation expansion in views.py -->
                 <div class="mb-3">
                     <label class="form-label">Location</label>
                     <input type="text" name="location" class="form-control" placeholder="City or State" value="{{ request.GET.location }}">
                 </div>
 
+                <!-- US#7 — hidden lat/lon fields for geolocation -->
                 <input type="hidden" id="user_lat" name="lat" value="{{ request.GET.lat }}">
                 <input type="hidden" id="user_lon" name="lon" value="{{ request.GET.lon }}">
 
+                <!-- US#7 — distance/radius filter with 📍 button -->
                 <div class="mb-3">
                     <label class="form-label">Distance from me</label>
                     <div class="input-group mb-2">
                         <select name="radius" class="form-select">
                             <option value="">Any</option>
+                            <option value="5" {% if request.GET.radius == '5' %}selected{% endif %}>5 mi</option>
                             <option value="10" {% if request.GET.radius == '10' %}selected{% endif %}>10 mi</option>
+                            <option value="15" {% if request.GET.radius == '15' %}selected{% endif %}>15 mi</option>
                             <option value="25" {% if request.GET.radius == '25' %}selected{% endif %}>25 mi</option>
                             <option value="50" {% if request.GET.radius == '50' %}selected{% endif %}>50 mi</option>
+                            <option value="75" {% if request.GET.radius == '75' %}selected{% endif %}>75 mi</option>
+                            <option value="100" {% if request.GET.radius == '100' %}selected{% endif %}>100 mi</option>
                         </select>
                         <button type="button" class="btn btn-outline-success" onclick="getLocation()" title="Use my location">
-                            📍
+                            Use My Location 📍
                         </button>
                     </div>
                 </div>
 
+                <!-- minimum salary -->
                 <div class="mb-3">
                     <label class="form-label">Minimum Salary</label>
                     <input type="number" name="min_salary" class="form-control" placeholder="e.g. 50000" value="{{ request.GET.min_salary }}">
                 </div>
 
+                <!-- visa sponsorship -->
                 <div class="form-check mb-2">
                     <input class="form-check-input" type="checkbox" name="visa" id="visaCheck" {% if request.GET.visa %}checked{% endif %}>
                     <label class="form-check-label" for="visaCheck">Visa Sponsorship</label>
                 </div>
-                
+
+                <!-- remote work checkbox -->
                 <div class="form-check mb-4">
                     <input class="form-check-input" type="checkbox" name="remote" id="remoteCheck" {% if request.GET.remote %}checked{% endif %}>
                     <label class="form-check-label" for="remoteCheck">Remote Work</label>
                 </div>
 
-                
+                <!-- work type checkboxes (on-site / remote / hybrid);
+                     selected_work_types passed from view so checked state persists after filtering -->
+                <div class="mb-3">
+                    <label class="form-label">Work Type</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="work_type" value="onsite" id="wtOnsite"
+                               {% if 'onsite' in selected_work_types %}checked{% endif %}>
+                        <label class="form-check-label" for="wtOnsite">On-site</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="work_type" value="remote" id="wtRemote"
+                               {% if 'remote' in selected_work_types %}checked{% endif %}>
+                        <label class="form-check-label" for="wtRemote">Remote</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="work_type" value="hybrid" id="wtHybrid"
+                               {% if 'hybrid' in selected_work_types %}checked{% endif %}>
+                        <label class="form-check-label" for="wtHybrid">Hybrid</label>
+                    </div>
+                </div>
 
                 <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
                 <a href="{% url 'jobs:job_list' %}" class="btn btn-outline-secondary w-100 mt-2">Reset</a>
@@ -62,42 +92,89 @@
         </div>
 
         <div class="col-md-9">
-            <h2 class="mb-4">Available Jobs</h2>
+            <!-- results count -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">Available Jobs</h2>
+                <span class="text-muted small">{{ jobs|length }} job{{ jobs|length|pluralize }} found</span>
+            </div>
 
+            <!-- US#7  — map container; US#17 added auto-fit in JS below -->
             <div id="map" style="height: 400px; width: 100%; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ddd; z-index: 1;"></div>
+
+            <!-- active filter pill tags -->
+            {% if request.GET.title or request.GET.location or selected_work_types or request.GET.min_salary or request.GET.visa or request.GET.radius %}
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    {% if request.GET.title %}
+                        <span class="badge rounded-pill border" style="background:#fffbea; color:#003057;">{{ request.GET.title }}</span>
+                    {% endif %}
+                    {% if request.GET.location %}
+                        <span class="badge rounded-pill border" style="background:#fffbea; color:#003057;">📍 {{ request.GET.location }}</span>
+                    {% endif %}
+                    {% for wt in selected_work_types %}
+                        <span class="badge rounded-pill border" style="background:#fffbea; color:#003057;">
+                            {% if wt == 'onsite' %}On-site{% elif wt == 'remote' %}Remote{% elif wt == 'hybrid' %}Hybrid{% endif %}
+                        </span>
+                    {% endfor %}
+                    {% if request.GET.min_salary %}
+                        <span class="badge rounded-pill border" style="background:#fffbea; color:#003057;">Min ${{ request.GET.min_salary }}</span>
+                    {% endif %}
+                    {% if request.GET.visa %}
+                        <span class="badge rounded-pill border" style="background:#fffbea; color:#003057;">✈️ Visa Sponsored</span>
+                    {% endif %}
+                    {% if request.GET.radius %}
+                        <span class="badge rounded-pill border" style="background:#fffbea; color:#003057;">Within {{ request.GET.radius }} mi</span>
+                    {% endif %}
+                </div>
+            {% endif %}
 
             <div class="row">
                 {% for job in jobs %}
                 <div class="col-12 mb-3">
                     <div class="card shadow-sm">
                         <div class="card-body">
-                            <div class="d-flex justify-content-between">
-                                <h5 class="card-title">{{ job.title }}</h5>
-                                <span class="badge bg-success">${{ job.salary_min }} - ${{ job.salary_max }}</span>
+
+                            <!-- job title + salary -->
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h5 class="card-title mb-1">{{ job.title }}</h5>
+                                    <h6 class="card-subtitle mb-2 text-muted">
+                                        {{ job.company_name }}
+                                        {% if job.location %}· <i class="fas fa-map-marker-alt me-1"></i>{{ job.location }}{% endif %}
+                                    </h6>
+                                </div>
+                                <span class="badge bg-success ms-2 text-nowrap">${{ job.salary_min }} – ${{ job.salary_max }}</span>
                             </div>
-                            <h6 class="card-subtitle mb-2 text-muted">{{ job.company_name }} | {{ job.location }}</h6>
-                            
-                            <!-- User Story #20 -->
-                            {% if job.is_flagged and user == job.recruiter %}
-                            <span class="badge bg-danger">Flagged by Admin</span>
-                            {% endif %}
-                            
-                            <p class="card-text text-truncate">{{ job.description }}</p>
-                            <div class="mt-2">
-                                <span class="badge bg-light text-dark border">{{ job.work_type }}</span>
+
+                            <!-- work type + visa badges -->
+                            <div class="mt-2 d-flex flex-wrap gap-1 mb-2">
+                                {% if job.work_type == 'onsite' %}
+                                    <span class="badge" style="background:#003057;">On-site</span>
+                                {% elif job.work_type == 'remote' %}
+                                    <span class="badge bg-success">Remote</span>
+                                {% elif job.work_type == 'hybrid' %}
+                                    <span class="badge" style="background:#EAAA00; color:#003057;">Hybrid</span>
+                                {% else %}
+                                    <span class="badge bg-light text-dark border">{{ job.work_type }}</span>
+                                {% endif %}
                                 {% if job.visa_sponsorship %}
-                                <span class="badge bg-info text-dark">Visa Sponsored</span>
+                                    <span class="badge bg-info text-dark">✈️ Visa Sponsored</span>
+                                {% endif %}
+                                <!-- US#20 (partner) — flagged badge -->
+                                {% if job.is_flagged and user == job.recruiter %}
+                                    <span class="badge bg-danger">⚠️ Flagged by Admin</span>
                                 {% endif %}
                             </div>
 
-                            
-                            <!-- User Story #10 -->
+                            <p class="card-text text-truncate text-muted mb-2">{{ job.description }}</p>
+
+                            <!-- US#10 (partner) — edit button for recruiter -->
                             <div class="mt-2 d-flex justify-content-between align-items-center">
                                 {% if user.is_authenticated and user == job.recruiter %}
                                 <a href="{% url 'jobs:job_edit' job.pk %}" class="btn btn-sm btn-danger">Edit</a>
                                 {% endif %}
                             </div>
-                            <!-- User Story #3-->
+
+                            <!-- US#3apply form for job seekers -->
                             {% if user.is_authenticated and user.role == 'job_seeker' %}
                             <form method="post" action="{% url 'jobs:apply_job' job.id %}" class="mt-3">
                                 {% csrf_token %}
@@ -112,7 +189,14 @@
                 </div>
                 {% empty %}
                 <div class="col-12 text-center py-5">
-                    <p class="text-muted">No jobs found matching</p>
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    {% if request.GET.radius %}
+                        <p class="text-muted">No jobs found within {{ request.GET.radius }} miles of your location.</p>
+                        <p class="text-muted small">Try increasing your radius or clearing the distance filter.</p>
+                    {% else %}
+                        <p class="text-muted">No jobs found matching your criteria.</p>
+                    {% endif %}
+                    <a href="{% url 'jobs:job_list' %}" class="btn btn-outline-secondary btn-sm">Clear Filters</a>
                 </div>
                 {% endfor %}
             </div>
@@ -121,37 +205,51 @@
 </div>
 
 <script>
-    // 1. Generate map(near GT)
+    // US#7 — generate map near GT
     var map = L.map('map').setView([33.7756, -84.3963], 13);
 
-    // 2. Call open street map tiles
+    // US#7 — open street map tiles
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
         attribution: 'Tiles &copy; Esri'
     }).addTo(map);
 
-    // 3. Repeat pinning Django jobs data
+    // US#17 — collect pin coords so we can auto-fit the map after placing all markers
+    var pinBounds = [];
+
+    // US#7 — pin jobs on map
+    // US#17 — wrapped in IIFE to scope marker/lat/lng per job; added pinBounds.push for auto-fit
     {% for job in jobs %}
-        // Generate pins if there's only latitude and longitude
         {% if job.latitude and job.longitude %}
-            var marker = L.marker([{{ job.latitude }}, {{ job.longitude }}]).addTo(map);
-            
-            // Pop up contecnt when you click pin
-            var popupContent = `
-                <div style="text-align:center; min-width: 150px;">
-                    <h6 style="margin:0; font-weight:bold; color:#003057;">{{ job.title|escapejs }}</h6>
-                    <p style="margin:5px 0; color:#545454; font-size:0.9em;">{{ job.company_name|escapejs }}</p>
-                    <span class="badge bg-success">$ {{ job.salary_min }}</span>
-                </div>
-            `;
-            
-            marker.bindPopup(popupContent);
+            (function() {
+                var lat = {{ job.latitude }};
+                var lng = {{ job.longitude }};
+                var marker = L.marker([lat, lng]).addTo(map);
+
+                // US#7 — popup content on pin click
+                var popupContent = `
+                    <div style="text-align:center; min-width: 150px;">
+                        <h6 style="margin:0; font-weight:bold; color:#003057;">{{ job.title|escapejs }} @ {{ job.company_name|escapejs }}</h6>
+                        <p style="margin:5px 0; color:#EAAA00; font-size:0.9em;">{{ job.location|escapejs }}</p>
+                        <span class="badge bg-success">$ {{ job.salary_min }} - {{ job.salary_max }}</span>
+                    </div>
+                `;
+
+                marker.bindPopup(popupContent);
+                pinBounds.push([lat, lng]); // US#17
+            })();
         {% endif %}
     {% endfor %}
-    
-    // Function: Bring my location[추가] 내 위치 가져오기 기능
+
+    // US#17 — auto-zoom to show all pins; 1 pin zooms to it, 2+ uses fitBounds, 0 stays on default
+    if (pinBounds.length === 1) {
+        map.setView(pinBounds[0], 14);
+    } else if (pinBounds.length > 1) {
+        map.fitBounds(L.latLngBounds(pinBounds), { padding: [40, 40] });
+    }
+
+    // US#7  — geolocation functions
     function getLocation() {
         if (navigator.geolocation) {
-            // Request location authority to brower
             navigator.geolocation.getCurrentPosition(showPosition, showError);
         } else {
             alert("Geolocation is not supported by this browser.");
@@ -159,11 +257,8 @@
     }
 
     function showPosition(position) {
-        // 1. Fill latitude, longitude at hidden input block
         document.getElementById("user_lat").value = position.coords.latitude;
         document.getElementById("user_lon").value = position.coords.longitude;
-        
-        // 2. Success alert
         alert("Location found! Select a distance and click 'Apply Filters'.");
     }
 
