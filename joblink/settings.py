@@ -125,4 +125,16 @@ AUTH_USER_MODEL = 'accounts.User'
 
 # User Story #14: Email Configuration
 # Use console backend so emails print to terminal
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Took out this because professor wants it to actually send an email: 
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# User Story #14: Email Configuration
+# Email configuration for real email sending
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'joblink.recruiterteam@gmail.com'
+EMAIL_HOST_PASSWORD = 'pjui ryiy oetu aupa'
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+SERVER_EMAIL = EMAIL_HOST_USER

@@ -7,7 +7,7 @@ from django.db.models import Q
 from django.shortcuts import render
 from django.http import JsonResponse
 from .models import User, JobSeekerProfile, Skill, Connection, SavedSearch
-from django.core.mail import send_mail
+from django.core.mail import EmailMessage
 from django.conf import settings
 from django.urls import reverse
 from urllib.parse import urlencode
@@ -497,20 +497,21 @@ def send_email_to_candidate(request, username):
             subject = form.cleaned_data['subject']
             message_body = form.cleaned_data['message']
             full_message = f"{message_body}\n\n"
-            full_message += f"---\n"
+            full_message += "---\n"
             full_message += f"Sent by {request.user.first_name or request.user.username}\n"
-            full_message += f"Recruiter on JobLink Platform"
-            
+            full_message += "Recruiter on JobLink Platform"
+
             try:
-                send_mail(
+                email = EmailMessage(
                     subject=subject,
-                    message=full_message,
-                    from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@joblink.com'),
-                    recipient_list=[candidate_email],
-                    fail_silently=False,
-                )
+                    body=full_message,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to=[candidate_email],
+                    reply_to=[request.user.email] if request.user.email else [],
+                ) 
+                email.send(fail_silently=False)
                 return JsonResponse({
-                    'success': True, 
+                    'success': True,
                     'message': f'Email sent to {candidate.username} ({candidate_email})'
                 })
             except Exception as e:
