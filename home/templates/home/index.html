@@ -29,9 +29,9 @@
     <div class="row align-items-center">
       <div class="col-lg-7">
         {% if user.is_authenticated %}
-          <p class="hero-eyebrow mb-2" style="font-size: 1.2rem;">Welcome back!</p>
+          <p class="hero-eyebrow mb-2" style="font-size: 1.2rem;">Welcome back,</p>
           <h1 class="hero-title">
-            {% if user.first_name %}{{ user.first_name }}{% else %}{{ user.username }}{% endif %}
+            {% if user.first_name %}{{ user.first_name }}!{% else %}{{ user.username }}!{% endif %}
           </h1>
           {% if user.role == 'job_seeker' %}
             <p class="hero-subtitle">Your next opportunity is waiting. Keep your profile sharp and stay ahead of the competition.</p>
