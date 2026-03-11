@@ -1,32 +1,308 @@
 {% extends "base.html" %}
+{% load static %}
 {% block content %}
-<div class="container mt-5 mb-5 pb-5 text-center">
-  {% if user.is_authenticated %}
-      <h1>
-        Welcome back,
-        {% if user.first_name %}
-          {{ user.first_name }}!
+<!-- Dim the background image on home page-->
+<div class="hero-photo-section" style="
+  position: relative;
+  min-height: 520px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  background: var(--navy-hover);
+"> 
+  <!-- Background image of the career fair on home page -->
+  <style>
+    .hero-bg {
+      position: absolute; inset: 0;
+      background: url("{% static 'img/careerfair.jpeg' %}") center center / cover no-repeat;
+      opacity: 0.36;
+      z-index: 0;
+    }
+  </style>
+  <div class="hero-bg"></div>
+
+  <!-- Gold bottom accent bar/bottom of the background image-->
+  <div style="position:absolute;bottom:0;left:0;right:0;height:4px;background:var(--gold);z-index:2;"></div>
+
+  <!-- Content on the background image, ex. Welcome back! {someones name} -->
+  <div class="container position-relative py-5" style="z-index:1;">
+    <div class="row align-items-center">
+      <div class="col-lg-7">
+        {% if user.is_authenticated %}
+          <p class="hero-eyebrow mb-2" style="font-size: 1.2rem;">Welcome back!</p>
+          <h1 class="hero-title">
+            {% if user.first_name %}{{ user.first_name }}{% else %}{{ user.username }}{% endif %}
+          </h1>
+          {% if user.role == 'job_seeker' %}
+            <p class="hero-subtitle">Your next opportunity is waiting. Keep your profile sharp and stay ahead of the competition.</p>
+            <div class="d-flex flex-wrap gap-3 mt-4">
+              <a href="{% url 'jobs:job_list' %}" class="btn hero-cta-primary">
+                <i class="fas fa-briefcase me-2"></i>Browse Jobs
+              </a>
+              <a href="{% url 'accounts.profile_me' %}" class="btn hero-cta-secondary">View My Profile</a>
+            </div>
+          {% elif user.role == 'recruiter' %}
+            <p class="hero-subtitle">Find top Georgia Tech talent and build your team with HiveHire's recruiter tools.</p>
+            <div class="d-flex flex-wrap gap-3 mt-4">
+              <a href="{% url 'jobs:job_post' %}" class="btn hero-cta-primary">
+                <i class="fas fa-plus me-2"></i>Post a Job
+              </a>
+              <a href="{% url 'candidate_search' %}" class="btn hero-cta-secondary">Search Candidates</a>
+            </div>
+          {% endif %}
         {% else %}
-          {{ user.username }}!
+          <p class="hero-eyebrow mb-2">Georgia Tech Career Network</p>
+          <h1 class="hero-title">Your Next Career<br>Starts Here</h1>
+          <p class="hero-subtitle">
+            HiveHire connects Georgia Tech students and alumni with top recruiters.
+            Build your profile, discover opportunities, and get hired.
+          </p>
+          <div class="d-flex flex-wrap gap-3 mt-4">
+            <a href="{% url 'accounts.signup' %}" class="btn hero-cta-primary">
+              <i class="fas fa-rocket me-2"></i>Get Started — It's Free
+            </a>
+            <a href="{% url 'accounts.login' %}" class="btn hero-cta-secondary">Login</a>
+          </div>
         {% endif %}
-      </h1>
-  {% if user.role == 'job_seeker' %}
-    <p class="lead">Ready to update your profile and stand out to recruiters?</p>
-  {% elif user.role == 'recruiter' %}
-  <p class="lead">Ready to find the perfect candidate or post some jobs now?</p>
-  {% endif %}
-    {% if user.role == 'job_seeker' %}
-      <a href="{% url 'accounts.profile_me' %}"
-         class="btn text-dark fw-semibold"
-         style="background:#EAAA00; border:1px solid #B3A369;">
-        Go to My Profile
-      </a>
-    {% endif %}
-  {% else %}
-    <h1>Welcome to JobLink</h1>
-    <p class="lead">Find your dream job or the perfect candidate here.</p>
-    <hr>
-    <a href="{% url 'accounts.login' %}" class="btn btn-primary">Get Started</a>
-  {% endif %}
+      </div>
+    </div>
+  </div>
 </div>
+<!-- The fake footer stuff -->
+<div style="background: var(--navy); border-bottom: 1px solid rgba(255,255,255,0.08);">
+  <div class="container py-4">
+    <div class="row text-center text-white g-3">
+      <div class="col-6 col-md-3">
+        <div class="stat-num">500+</div>
+        <div class="stat-label">Active Listings</div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-num">200+</div>
+        <div class="stat-label">Partner Companies</div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-num">1,000+</div>
+        <div class="stat-label">Profiles Created</div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-num">GT</div>
+        <div class="stat-label">Exclusive Network</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% if not user.is_authenticated %}
+<div style="background: var(--off-white);" class="py-5">
+  <div class="container">
+    <div class="text-center mb-5">
+      <h2 style="font-weight:700; color:var(--navy);">Why HiveHire?</h2>
+      <p class="text-muted" style="max-width:480px;margin:0 auto;">
+        Built for the Georgia Tech community — from first internship to full-time career.
+      </p>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fas fa-user-tie"></i></div>
+          <h5>Build Your Profile</h5>
+          <p>Showcase your skills, experience, and education to recruiters actively looking for GT talent.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fas fa-search"></i></div>
+          <h5>Smart Job Search</h5>
+          <p>Filter by location, salary, work type, and visa sponsorship. Find the roles that actually fit you.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fas fa-handshake"></i></div>
+          <h5>Connect & Network</h5>
+          <p>Message recruiters directly, connect with fellow students, and track every application in one place.</p>
+        </div>
+      </div>
+    </div>
+    <div class="text-center mt-5">
+      <a href="{% url 'accounts.signup' %}" class="btn hero-cta-primary px-5">
+        Create Your Free Profile
+      </a>
+    </div>
+  </div>
+</div>
+{% endif %}
+<!-- Quick-action buttons for Job Seeker -->
+{% if user.is_authenticated and user.role == 'job_seeker' %}
+<div style="background: var(--off-white);" class="py-5">
+  <div class="container">
+    <h4 class="mb-4" style="font-weight:700; color:var(--navy);">Quick Actions</h4>
+    <div class="row g-3">
+      <div class="col-6 col-lg-3">
+        <a href="{% url 'jobs:job_list' %}" class="quick-tile">
+          <i class="fas fa-briefcase fa-lg mb-2"></i><span>Browse Jobs</span>
+        </a>
+      </div>
+      <div class="col-6 col-lg-3">
+        <a href="{% url 'jobs:my_applications' %}" class="quick-tile">
+          <i class="fas fa-clipboard-list fa-lg mb-2"></i><span>My Applications</span>
+        </a>
+      </div>
+      <div class="col-6 col-lg-3">
+        <a href="{% url 'accounts.profile_me' %}" class="quick-tile">
+          <i class="fas fa-id-card fa-lg mb-2"></i><span>My Profile</span>
+        </a>
+      </div>
+      <div class="col-6 col-lg-3">
+        <a href="{% url 'messaging:inbox' %}" class="quick-tile">
+          <i class="fas fa-envelope fa-lg mb-2"></i><span>Messages</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+<!-- Quick-action buttons for Recruiter -->
+{% if user.is_authenticated and user.role == 'recruiter' %}
+<div style="background: var(--off-white);" class="py-5">
+  <div class="container">
+    <h4 class="mb-4" style="font-weight:700; color:var(--navy);">Quick Actions</h4>
+    <div class="row g-3">
+      <div class="col-6 col-lg-3">
+        <a href="{% url 'jobs:job_post' %}" class="quick-tile">
+          <i class="fas fa-plus-circle fa-lg mb-2"></i><span>Post a Job</span>
+        </a>
+      </div>
+      <div class="col-6 col-lg-3">
+        <a href="{% url 'jobs:kanban' %}" class="quick-tile">
+          <i class="fas fa-columns fa-lg mb-2"></i><span>Manage Pipeline</span>
+        </a>
+      </div>
+      <div class="col-6 col-lg-3">
+        <a href="{% url 'candidate_search' %}" class="quick-tile">
+          <i class="fas fa-users fa-lg mb-2"></i><span>Find Candidates</span>
+        </a>
+      </div>
+      <div class="col-6 col-lg-3">
+        <a href="{% url 'messaging:inbox' %}" class="quick-tile">
+          <i class="fas fa-envelope fa-lg mb-2"></i><span>Messages</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+<style>
+  .hero-eyebrow {
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .hero-title {
+    font-size: clamp(2rem, 4.5vw, 3.1rem);
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.13;
+    margin-bottom: 0.75rem;
+  }
+  .hero-subtitle {
+    font-size: 1.05rem;
+    color: rgba(255,255,255,0.82);
+    max-width: 500px;
+    line-height: 1.7;
+  }
+  .hero-cta-primary {
+    background-color: var(--gold);
+    border-color: var(--gold);
+    color: var(--navy) !important;
+    font-weight: 700;
+    font-size: 0.9375rem;
+    padding: 0.65rem 1.6rem;
+    border-radius: 6px;
+    transition: background 0.18s, transform 0.18s, box-shadow 0.18s;
+  }
+  .hero-cta-primary:hover {
+    background-color: #d49b00;
+    border-color: #d49b00;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(234,170,0,0.4);
+  }
+  .hero-cta-secondary {
+    background: transparent;
+    border: 2px solid rgba(255,255,255,0.5);
+    color: #fff !important;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    padding: 0.65rem 1.6rem;
+    border-radius: 6px;
+    transition: border-color 0.18s, background 0.18s;
+  }
+  .hero-cta-secondary:hover {
+    border-color: var(--gold);
+    background: rgba(234,170,0,0.1);
+  }
+  .stat-num {
+    font-size: 1.9rem;
+    font-weight: 800;
+    color: var(--gold);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: rgba(255,255,255,0.55);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-top: 5px;
+  }
+  .feature-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 2rem 1.5rem;
+    height: 100%;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+    text-align: center;
+    transition: box-shadow 0.18s, transform 0.18s;
+  }
+  .feature-card:hover {
+    box-shadow: 0 6px 22px rgba(0,0,0,0.11);
+    transform: translateY(-3px);
+  }
+  .feature-icon {
+    width: 56px; height: 56px;
+    background: var(--navy);
+    color: var(--gold);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.25rem;
+    margin: 0 auto 1rem;
+  }
+  .feature-card h5 { font-weight: 700; color: var(--navy); margin-bottom: 0.5rem; }
+  .feature-card p  { font-size: 0.875rem; color: var(--gray-text); margin: 0; line-height: 1.6; }
+  .quick-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    background: #fff;
+    border: 1.5px solid var(--gray-mid);
+    border-radius: 10px;
+    padding: 1.5rem 1rem;
+    text-decoration: none;
+    color: var(--navy);
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+  }
+  .quick-tile:hover {
+    border-color: var(--gold);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.09);
+    transform: translateY(-2px);
+    color: var(--navy);
+  }
+  .quick-tile i { color: var(--gold); }
+</style>
+
 {% endblock content %}

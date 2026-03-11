@@ -1,7 +1,7 @@
 from django.shortcuts import render
 
 def index(request):
-    title = "JobLink"
+    title = "GT HiveHire"
     if request.user.is_authenticated:
         display_name = request.user.first_name or request.user.username
         if request.user.role == "job_seeker":
@@ -12,7 +12,7 @@ def index(request):
             subtitle = "Welcome back."
         welcome = f"Welcome back, {display_name}"
     else:
-        welcome = "Welcome to JobLink"
+        welcome = "Welcome to HiveHire"
         subtitle = "Find your dream job or the perfect candidate here."
 
     template_data = {
@@ -25,5 +25,5 @@ def index(request):
 
 def about(request):
     template_data = {}
-    template_data['title'] = 'About Job Link'
+    template_data['title'] = 'About HiveHire'
     return render(request, 'home/about.html', {'template_data': template_data})
