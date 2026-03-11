@@ -6,7 +6,7 @@
       <div class="col-md-6 col-lg-5">
         <div class="card auth-card">
           <div class="card-body">
-            <h2>Sign In</h2>
+            <h2>Login</h2>
             <p class="auth-subtitle">Welcome back — let's pick up where you left off.</p>
             <hr>
             {% if template_data.error %}
@@ -28,7 +28,7 @@
                        autocomplete="current-password" class="form-control"
                        placeholder="Enter your password">
               </div>
-              <button type="submit" class="btn btn-primary">Sign In</button>
+              <button type="submit" class="btn btn-primary">Login</button>
             </form>
             <p class="text-center text-muted mt-3 mb-0" style="font-size:0.875rem;">
               Don't have an account? <a href="{% url 'accounts.signup' %}" style="color:var(--navy);font-weight:600;">Sign Up</a>
