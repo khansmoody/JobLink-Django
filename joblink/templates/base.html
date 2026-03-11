@@ -1,180 +1,319 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   {% load static %}
   <head>
-    <title>{{ template_data.title }}</title>
+    <title>{% block title %}{{ template_data.title|default:"HiveHire" }} {% endblock %}</title>
     <link href=
       "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
     <link rel=
       "stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
     <link href=
-      "https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+      "https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src=
       "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"crossorigin="anonymous">
     </script>
     <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
-      .navbar-dark .navbar-nav .nav-link {
-        color: #EAAA00 !important;
+      .hh-nav {
+        background: #003057;
+        padding: 0;
+        min-height: 64px;
+        border-bottom: 2px solid #EAAA00;
+        position: sticky;
+        top: 0;
+        z-index: 1030;
+        box-shadow: 0 2px 10px #003057;
+      }
+      .hh-nav .container {
+        height: 64px;
+        display: flex;
+        align-items: center;
+      }
+      .hh-brand img {
+        height: 46px;
+        transition: opacity 0.15s;
+      }
+      .hh-brand:hover img { opacity: 0.85; }
+      .hh-nav .navbar-nav .nav-link {
+        color: rgba(255,255,255,0.82) !important;
+        font-size: 0.84rem;
         font-weight: 500;
+        padding: 0.35rem 0.75rem !important;
+        border-radius: 6px;
+        transition: background 0.15s, color 0.15s;
+        white-space: nowrap;
       }
-      .navbar-dark .navbar-nav .nav-link:hover,
-      .navbar-dark .navbar-nav .nav-link:focus {
-        color: #B3A369 !important;
+      .hh-nav .navbar-nav .nav-link:hover,
+      .hh-nav .navbar-nav .nav-link:focus {
+        color: #EAAA00 !important;
+        background: rgba(255,255,255,0.08);
       }
-      .dropdown-menu .dropdown-item:active {
-        background-color: #003057;
+      .hh-nav .navbar-nav .nav-link.active {
+        color: #EAAA00 !important;
+        background: rgba(234,170,0,0.12);
+      }
+      .hh-nav .navbar-nav .nav-link.nav-pill-gold {
+        background: #EAAA00 !important;
+        color: #003057 !important;
+        font-weight: 600 !important;
+        padding: 0.35rem 0.75rem !important;
+        border-radius: 6px !important;
+      }
+      .hh-nav .navbar-nav .nav-link.nav-pill-gold:hover {
+        background: white !important;
+        color: #003057 !important;
+      }
+      .nav-sep {
+        width: 1px;
+        height: 22px;
+        background: rgba(255,255,255,0.18);
+        margin: 0 4px;
+        align-self: center;
+        flex-shrink: 0;
+      }
+      .hh-search {
+        position: relative;
+      }
+      .hh-search input {
+        background: rgba(255,255,255,0.1);
+        border: 1.5px solid rgba(255,255,255,0.2);
+        color: #fff;
+        border-radius: 20px;
+        padding: 0.35rem 2.4rem 0.35rem 1rem;
+        font-size: 0.82rem;
+        width: 300px;
+        transition: border-color 0.15s, background 0.15s, width 0.25s;
+      }
+      .hh-search input::placeholder { color: rgba(255,255,255,0.5); }
+      .hh-search input:focus {
+        outline: none;
+        background: rgba(255,255,255,0.15);
+        border-color: #EAAA00;
+        width: 350px;
+      }
+      .hh-search button {
+        position: absolute;
+        right: 8px; top: 50%;
+        transform: translateY(-50%);
+        background: none; border: none;
+        color: rgba(255,255,255,0.6);
+        font-size: 0.78rem;
+        padding: 0; cursor: pointer;
+        transition: color 0.15s;
+      }
+      .hh-search button:hover { color: #EAAA00; }
+      .hh-avatar-btn {
+        background: none; border: none; padding: 0; cursor: pointer;
+        display: flex; align-items: center; gap: 0.4rem;
+      }
+      .hh-avatar {
+        width: 34px; height: 34px; border-radius: 50%;
+        border: 2px solid #EAAA00;
+        object-fit: cover;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 0.85rem;
+        background: rgba(179,163,105,0.3);
         color: #EAAA00;
+        flex-shrink: 0;
       }
-      .search-form {
-        max-width: 400px;
+      .hh-avatar-btn .fa-chevron-down {
+        font-size: 0.65rem;
+        color: rgba(255,255,255,0.5);
+        transition: transform 0.2s;
       }
-      .search-form input {
-        background-color: rgba(255, 255, 255, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        color: white;
+      .hh-avatar-btn[aria-expanded="true"] .fa-chevron-down {
+        transform: rotate(180deg);
       }
-      .search-form input::placeholder {
-        color: rgba(255, 255, 255, 0.7);
+      .hh-dropdown {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.14);
+        padding: 0.4rem 0;
+        min-width: 190px;
+        margin-top: 8px !important;
       }
-      .search-form input:focus {
-        background-color: rgba(255, 255, 255, 0.3);
-        border-color: #EAAA00;
-        color: white;
+      .hh-dropdown .dropdown-item {
+        font-size: 0.84rem;
+        padding: 0.55rem 1.1rem;
+        color: #1a1a2e;
+        border-radius: 6px;
+        margin: 0 4px;
+        width: calc(100% - 8px);
+        transition: background 0.12s;
       }
-      .search-form button {
-        background-color: #EAAA00;
-        border-color: #EAAA00;
+      .hh-dropdown .dropdown-item:hover {
+        background: #f0f2f5;
         color: #003057;
       }
-      .search-form button:hover {
-        background-color: #B3A369;
-        border-color: #B3A369;
+      .hh-dropdown .dropdown-item i {
+        width: 18px; color: #6c757d;
+      }
+      .hh-dropdown .dropdown-item.text-danger i { color: #dc3545; }
+      .hh-dropdown .dropdown-divider { margin: 0.3rem 0.7rem; }
+      .hh-dropdown .dd-user-header {
+        padding: 0.6rem 1.1rem 0.4rem;
+        border-bottom: 1px solid #f0f2f5;
+        margin-bottom: 0.25rem;
+      }
+      .hh-dropdown .dd-user-header .dd-name {
+        font-size: 0.84rem; font-weight: 700; color: #003057;
+      }
+      .hh-dropdown .dd-user-header .dd-role {
+        font-size: 0.72rem; color: #6c757d;
+        text-transform: capitalize;
+      }
+      .hh-avatar-btn.dropdown-toggle::after { display: none; }
+      .hh-nav .navbar-toggler {
+        border-color: rgba(255,255,255,0.3);
+        padding: 0.25rem 0.5rem;
+      }
+      .hh-nav .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255,255,255,0.85%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+      }
+      .hh-nav .navbar-nav .nav-link[data-active="true"] {
+        color: #EAAA00 !important;
+        background: rgba(234,170,0,0.1);
       }
     </style>
   </head>
 
   <body>
     <!-- Header -->
-    <nav class="p-3 navbar navbar-dark navbar-expand-lg" style="background-color: #003057;">
+    <nav class="hh-nav navbar navbar-expand-lg">
       <div class="container">
-        <a class="navbar-brand" href="{% url 'home.index' %}">
-          <img src="{% static 'img/logoGT.png' %}" alt="logo" height="40" />
+        <a class="hh-brand navbar-brand me-3" href="{% url 'home.index' %}">
+          <img src="{% static 'img/logoGTHiveHire.png' %}" alt="HiveHire" />
         </a>
 
-        <button
-          class="navbar-toggler"
+        <button 
+          class="navbar-toggler ms-auto" 
           type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNavAltMarkup"
-          aria-controls="navbarNavAltMarkup"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
+          data-bs-toggle="collapse" 
+          data-bs-target="#hhNav"
+          aria-controls="hhNav" 
+          aria-expanded="false" 
+          aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
-        <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-          
+        <div class="collapse navbar-collapse" id="hhNav">
+
           <!-- Search Bar for Job Seekers -->
           {% if user.is_authenticated and user.role == 'job_seeker' %}
-            <form method="get" action="{% url 'accounts.search' %}" class="d-flex search-form mx-auto my-2 my-lg-0">
-              <input 
-                class="form-control me-2" 
-                type="search" 
-                name="q" 
-                placeholder="Search profiles..." 
-                aria-label="Search"
-                value="{{ request.GET.q }}"
-              >
-              <button class="btn" type="submit">
-                <i class="fas fa-search"></i>
-              </button>
+            <form method="get" action="{% url 'accounts.search' %}" class="hh-search mx-auto my-2 my-lg-0">
+              <input type="search" name="q" placeholder="Search profiles…" value="{{ request.GET.q }}">
+              <button type="submit"><i class="fas fa-search"></i></button>
             </form>
+          {% else %}
+            <div class="flex-grow-1"></div>
           {% endif %}
-          
-          <div class="navbar-nav ms-auto navbar-ml">
-            <a class="nav-link" href="{% url 'home.about' %}">About</a>
-            <div class="vr bg-white mx-2 d-none d-lg-block"></div>
+
+          <div class="navbar-nav align-items-lg-center gap-1">
+            <a class="nav-link fs-6" href="{% url 'home.about' %}">About</a>
+            <div class="nav-sep d-none d-lg-block" style="background-color: #EAAA00;"></div>
 
             {% if user.is_authenticated %}
+              {% if user.role == 'job_seeker' %}
               <!-- User Story 13 -->
-                <a class="nav-link" href="{% url 'messaging:inbox' %}">
+                <a class="nav-link fs-6" href="{% url 'messaging:inbox' %}">
                   <i class="fas fa-envelope me-1"></i>Messages
                 </a>
-                <div class="vr bg-white mx-2 d-none d-lg-block"></div>
-
-                <!-- User Story 19 -->
-                {% if user.role == 'admin' %}
-                  <a class="nav-link" href="{% url 'admin_user_list' %}">
-                    <i class="fas fa-shield-alt me-1"></i>Admin
-                  </a>
-                  <div class="vr bg-white mx-2 d-none d-lg-block"></div>
-                {% endif %}
-              {% if user.role == 'job_seeker' %}
-
+                <div class="nav-sep d-none d-lg-block" style="background-color: #EAAA00;"></div>
                 <!-- User Story 1 -->
-                <li class="nav-item">
-                  <a class="nav-link" href="{% url 'jobs:job_list' %}">Available Jobs</a>
-                </li>
-
-                <a class="nav-link" href="{% url 'jobs:my_applications' %}">My Applications</a>
-
-
-                
+                <a class="nav-link fs-6" href="{% url 'jobs:job_list' %}">Jobs</a>
+                <a class="nav-link fs-6" href="{% url 'jobs:my_applications' %}">Applications</a>
                 <!-- Connections Link -->
-                <a class="nav-link" href="{% url 'accounts.connections' %}">
+                <a class="nav-link fs-6" href="{% url 'accounts.connections' %}">
                   <i class="fas fa-users me-1"></i>Connections
                 </a>
-                
-                <div class="nav-item dropdown ms-2">
-                  <a
-                    class="nav-link dropdown-toggle p-0 d-flex align-items-center"
-                    href="#"
-                    id="profileDropdown"
-                    role="button"
-                    data-bs-toggle="dropdown"
-                    aria-expanded="false"
-                  >
+                <div class="nav-sep d-none d-lg-block" style="background-color: #EAAA00;"></div>
+                <!-- Profile dropdown -->
+                <div class="nav-item dropdown">
+                  <button class="hh-avatar-btn dropdown-toggle" id="profileDrop"
+                    data-bs-toggle="dropdown" aria-expanded="false">
                     {% if user.profile and user.profile.profile_photo %}
-                      <img
-                        src="{{ user.profile.profile_photo.url }}"
-                        alt="Profile"
-                        style="width:36px;height:36px;object-fit:cover;border-radius:50%;border:2px solid #EAAA00;"
-                      >
+                      <img class="hh-avatar" src="{{ user.profile.profile_photo.url }}" alt="avatar">
                     {% else %}
-                      <div
-                        style="width:36px;height:36px;border-radius:50%;background:#B3A369;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;border:2px solid #EAAA00;"
-                      >
-                        {{ user.username|first|upper }}
-                      </div>
+                      <div class="hh-avatar">{{ user.username|first|upper }}</div>
                     {% endif %}
-                  </a>
-                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
-                    <li><a class="dropdown-item" href="{% url 'accounts.profile_me' %}">View Profile</a></li>
-                    <li><a class="dropdown-item" href="{% url 'accounts.profile_edit' %}">Edit Profile</a></li>
-                    <li><a class="dropdown-item" href="{% url 'accounts.settings' %}">Settings & Privacy</a></li>  <!-- User Story 5: Settings link in navbar -->
+                    <i class="fas fa-chevron-down"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end hh-dropdown" aria-labelledby="profileDrop">
+                    <li>
+                      <div class="dd-user-header">
+                        <div class="dd-name">{{ user.get_full_name|default:user.username }}</div>
+                        <div class="dd-role">Job Seeker</div>
+                      </div>
+                    </li>
+                    <li><a class="dropdown-item" href="{% url 'accounts.profile_me' %}"><i class="fas fa-user me-2"></i>View Profile</a></li>
+                    <li><a class="dropdown-item" href="{% url 'accounts.profile_edit' %}"><i class="fas fa-pen me-2"></i>Edit Profile</a></li>
+                    <li><a class="dropdown-item" href="{% url 'accounts.settings' %}"><i class="fas fa-shield-alt me-2"></i>Settings & Privacy</a></li> <!-- User Story 5: Settings link in navbar -->
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item text-danger" href="{% url 'accounts.logout' %}">Logout ({{ user.username }})</a></li>
+                    <li><a class="dropdown-item text-danger" href="{% url 'accounts.logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Log Out</a></li>
                   </ul>
                 </div>
-              
-              <!-- User Story 10 -->  
-              {% elif user.role == 'recruiter' %}
-                <a class="nav-link" href="{% url 'jobs:job_list' %}">Available Jobs</a>
-                <a class="nav-link" href="{% url 'jobs:job_post' %}">Post a Job</a>
-                <a class="nav-link" href="{% url 'jobs:kanban' %}">Manage Candidates</a>
-                <a class="nav-link" href="{% url 'candidate_search' %}">Search Candidates</a>
-                <a class="nav-link" href="{% url 'accounts.logout' %}">Logout ({{ user.username }})</a></li>
 
+              <!-- User Story 10 --> 
+              {% elif user.role == 'recruiter' %}
+                <!-- User Story 13 -->
+                <a class="nav-link fs-6" href="{% url 'messaging:inbox' %}">
+                  <i class="fas fa-envelope me-1"></i>Messages
+                </a>
+                <div class="nav-sep d-none d-lg-block" style="background-color: #EAAA00;"></div>
+                <a class="nav-link fs-6" href="{% url 'jobs:job_list' %}">Jobs</a>
+                <a class="nav-link fs-6" href="{% url 'jobs:job_post' %}">
+                  <i class="fas fa-plus me-1" style="color: #EAAA00;"></i>Post Job
+                </a>
+                <a class="nav-link fs-6" href="{% url 'jobs:kanban' %}">Pipeline</a>
+                <a class="nav-link fs-6" href="{% url 'candidate_search' %}">Candidates</a>
+                <div class="nav-sep d-none d-lg-block" style="background-color: #EAAA00;"></div>
+                <div class="nav-item dropdown">
+                  <button class="hh-avatar-btn dropdown-toggle" id="recDrop"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                    <div class="hh-avatar">{{ user.username|first|upper }}</div>
+                    <i class="fas fa-chevron-down"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end hh-dropdown" aria-labelledby="recDrop">
+                    <li>
+                      <div class="dd-user-header">
+                        <div class="dd-name">{{ user.username }}</div>
+                        <div class="dd-role">Recruiter</div>
+                      </div>
+                    </li>
+                    <li><a class="dropdown-item text-danger" href="{% url 'accounts.logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Log Out</a></li>
+                  </ul>
+                </div>
+              <!-- User Story 19 -->
               {% elif user.role == 'admin' %}
-                <a class="nav-link" href="{% url 'admin:index' %}">Admin Panel</a>
-                <a class="nav-link" href="{% url 'accounts.logout' %}">Logout ({{ user.username }})</a></li>
+                <a class="nav-link fs-6" href="{% url 'admin:index' %}">Admin Panel</a>
+                <div class="nav-sep d-none d-lg-block" style="background-color: #EAAA00;"></div>
+                <a class="nav-link fs-6" href="{% url 'admin_user_list' %}">
+                  <i class="fas fa-shield-alt me-1"></i>User Management
+                </a>
+                <div class="nav-sep d-none d-lg-block" style="background-color: #EAAA00;"></div>
+                <div class="nav-item dropdown">
+                  <button class="hh-avatar-btn dropdown-toggle" id="adminDrop"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                    <div class="hh-avatar">{{ user.username|first|upper }}</div>
+                    <i class="fas fa-chevron-down"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end hh-dropdown" aria-labelledby="adminDrop">
+                    <li>
+                      <div class="dd-user-header">
+                        <div class="dd-name">{{ user.username }}</div>
+                        <div class="dd-role">Administrator</div>
+                      </div>
+                    </li>
+                    <li><a class="dropdown-item text-danger" href="{% url 'accounts.logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Log Out</a></li>
+                  </ul>
+                </div>
               {% endif %}
 
             {% else %}
-              <a class="nav-link" href="{% url 'accounts.login' %}">Login</a>
-              <a class="nav-link" href="{% url 'accounts.signup' %}">Sign Up</a>
+              <!-- Logged out -->
+              <a class="nav-link fs-6" href="{% url 'accounts.login' %}">Login</a>
+              <div class="nav-sep d-none d-lg-block" style="background-color: #EAAA00;"></div>
+              <a class="nav-link nav-pill-gold ms-1" href="{% url 'accounts.signup' %}">Sign Up</a>
             {% endif %}
           </div>
         </div>
@@ -188,44 +327,42 @@
     </div>
 
     <!-- Footer -->
-    <section class="p-3 ms-footer d-none d-md-block" style="background-color: #003057;">
+    <section class="p-3 d-none d-md-block" style="background:#003057;">
       <div class="container">
         <div class="row mt-3 text-white">
-          <div class="col-md-6 col-lg-6 col-xl-6 mx-auto mb-4">
-            <b>Job Link</b>
-            <hr />
-            <p>Welcome to Job Link Website</p>
+          <div class="col-md-6 col-lg-6 mx-auto mb-4">
+            <b>HiveHire</b>
+            <hr>
+            <p>Georgia Tech's career networking platform</p>
           </div>
-          <div class="col-md-3 col-lg-3 col-xl-3 mx-auto mb-4">
+          <div class="col-md-3 col-lg-3 mx-auto mb-4">
             <b>LINKS</b>
-            <hr />
-            <p>
-              <a class="nav-link" href="{% url 'home.about' %}">
-                About
-              </a>
-            </p>
+            <hr>
+            <p><a class="nav-link" href="{% url 'home.about' %}">About HiveHire</a></p>
           </div>
-          <div class="col-md-3 col-lg-3 col-xl-3 mx-auto mb-4">
+          <div class="col-md-3 col-lg-3 mx-auto mb-4">
             <b>CONTACT</b>
-            <hr />
-            <p><i class="fas fa-home me-2"></i>Atlanta, GA 30024</p>
+            <hr>
+            <p><i class="fas fa-home me-2"></i>Atlanta, GA 30332</p>
           </div>
         </div>
       </div>
     </section>
-
-    <section class="p-3 ms-footer-bottom" style="background-color: #003057;">
+    <section class="p-3" style="background:#002244;">
       <div class="container d-flex justify-content-between">
-        <div class="me-5 text-white">
-          <span>
-            DESIGNED BY
-            <a href="https://www.x.com/danielgarax" target="_blank">HANGYEOL KIM, MAI TRAN, MICHELLE RHEE, PHUONG TRAN, AND RAYMOND TAI</a>
-          </span>
+        <div class="text-white" style="font-size:0.78rem; opacity:0.7;">
+          Designed by Hangyeol Kim, Mai Tran, Michelle Rhee, Phuong Tran &amp; Raymond Tai
         </div>
-        <div class="text-white">
-          <span>&copy; Copyright - 2026</span>
-        </div>
+        <div class="text-white" style="font-size:0.78rem; opacity:0.7;">&copy; 2026 HiveHire</div>
       </div>
     </section>
+    <script>
+      document.querySelectorAll('.hh-nav .nav-link').forEach(function(link) {
+        if (link.href === window.location.href ||
+            (link.href !== window.location.origin + '/' && window.location.pathname.startsWith(new URL(link.href).pathname))) {
+          link.classList.add('active');
+        }
+      });
+    </script>
   </body>
 </html>

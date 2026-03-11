@@ -146,8 +146,8 @@
         </div>
       {% else %}
         <!-- Connect Stuff -->
-        {% if user.role == 'job_seeker' and template_data.profile.user.role == 'job_seeker' %}
-          <div class="mt-3 d-flex gap-2">
+        <div class="mt-3 d-flex gap-2 flex-wrap">
+          {% if user.role == 'job_seeker' and template_data.profile.user.role == 'job_seeker' %}
             {% if template_data.connection_status == 'accepted' %}
               <button class="btn btn-success" disabled>
                 <i class="fas fa-check me-2"></i>Connected
@@ -171,8 +171,12 @@
                 <i class="fas fa-user-plus me-2"></i>Connect
               </a>
             {% endif %}
-          </div>
-        {% endif %}
+          {% endif %}
+          <a href="{% url 'messaging:start_with_user' template_data.profile.user.id %}"
+             class="btn fw-semibold" style="background:#003057;color:white;">
+            <i class="fas fa-comment me-2"></i>Message
+          </a>
+        </div>
       {% endif %}
     </div>
   </div>

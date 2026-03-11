@@ -8,7 +8,14 @@ def admin_required(user):
 @user_passes_test(admin_required)
 def user_list(request):
     users = User.objects.all().order_by("username")
-    return render(request, "accounts/admin_user_list.html", {"users": users})
+    context = {
+        "users": users,
+        "total_count":     users.count(),
+        "job_seeker_count": users.filter(role="job_seeker").count(),
+        "recruiter_count":  users.filter(role="recruiter").count(),
+        "admin_count":      users.filter(role="admin").count(),
+    }
+    return render(request, "accounts/admin_user_list.html", context)
 
 @user_passes_test(admin_required)
 def update_role(request, user_id):

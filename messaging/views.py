@@ -1,7 +1,7 @@
-from django.shortcuts import render
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden
+from django.db.models import Q
 
 from accounts.models import User
 from .models import Conversation, Message
@@ -17,25 +17,14 @@ def _is_admin(user):
 
 @login_required
 def inbox(request):
-    """
-    Shows all conversations for the logged-in user.
-    """
-    if _is_recruiter(request.user):
-        convos = Conversation.objects.filter(recruiter=request.user).order_by("-created_at")
-    else:
-        # candidates (job_seekers) see their conversations
-        convos = Conversation.objects.filter(candidate=request.user).order_by("-created_at")
-
+    convos = Conversation.objects.filter(Q(recruiter=request.user) | Q(candidate=request.user)).order_by("-created_at")
     return render(request, "messaging/inbox.html", {"conversations": convos})
 
 
 @login_required
 def start_conversation(request, candidate_id):
-    """
-    Recruiter starts (or opens) a conversation with a candidate.
-    """
-    if not _is_recruiter(request.user):
-        return HttpResponseForbidden("Only recruiters can start conversations.")
+    if getattr(request.user, "role", None) != "recruiter":
+        return HttpResponseForbidden("Only recruiters can use this endpoint.")
 
     candidate = get_object_or_404(User, id=candidate_id)
 
@@ -49,9 +38,6 @@ def start_conversation(request, candidate_id):
 
 @login_required
 def chat(request, convo_id):
-    """
-    Chat thread view + send message.
-    """
     convo = get_object_or_404(Conversation, id=convo_id)
 
     # access control: only participants can view
@@ -69,7 +55,18 @@ def chat(request, convo_id):
         return redirect("messaging:chat", convo_id=convo.id)
 
     messages = convo.messages.select_related("sender").order_by("created_at")
+    other = convo.candidate if request.user == convo.recruiter else convo.recruiter
     return render(request, "messaging/chat.html", {
         "conversation": convo,
-        "messages": messages
+        "messages": messages,
+        "other_user": other,
     })
+
+@login_required
+def start_with_user(request, user_id):
+    other = get_object_or_404(User, id=user_id)
+    if other == request.user:
+        return redirect("messaging:inbox")
+    a, b = sorted([request.user, other], key=lambda u: u.id)
+    convo, _ = Conversation.objects.get_or_create(recruiter=a, candidate=b)
+    return redirect("messaging:chat", convo_id=convo.id)
