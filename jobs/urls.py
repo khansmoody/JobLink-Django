@@ -9,6 +9,6 @@ urlpatterns = [
     path('<int:pk>/edit/', views.job_edit, name='job_edit'),  # User Story #10
     path('apply/<int:job_id>/', views.apply_job, name='apply_job'),
     path('applications/', views.my_applications, name='my_applications'),
-    path('kanban/', views.kanban, name = 'kanban')
-
+    path('kanban/', views.kanban, name='kanban'),
+    path('kanban/application/<int:application_id>/status/', views.job_status, name='update_application_status'),
 ]

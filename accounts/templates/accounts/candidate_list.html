@@ -108,6 +108,9 @@
 
                                 <h5 class="card-title">{{ candidate.display_name }}</h5>
                                 <h6 class="card-subtitle mb-2 text-muted">{{ candidate.headline }}</h6>
+                                 {% if candidate.is_recommended %}
+                                    <span class="badge bg-primary mb-2">Recommended</span>
+                                    {% endif %}
                                 <p class="card-text">
                                     <strong>Location:</strong> {{ candidate.location|default:"Not specified" }}
                                 </p>

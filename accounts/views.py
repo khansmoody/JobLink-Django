@@ -12,6 +12,9 @@ from django.conf import settings
 from django.urls import reverse
 from urllib.parse import urlencode
 from django.utils import timezone
+from jobs.models import Job
+from .models import JobSeekerProfile
+from .models import User, JobSeekerProfile, Skill, Connection
 from .forms import (
     CustomUserCreationForm,
     CustomErrorList,
@@ -432,6 +435,20 @@ def candidate_search(request):
 
     # Recruiter's saved searches (for the panel)
     my_saved_searches = SavedSearch.objects.filter(recruiter=request.user)
+
+     #Recruiter gets recommended candidates 
+    recruiter_jobs = Job.objects.filter(recruiter=request.user)
+    recruiter_skills = set()
+
+    for job in recruiter_jobs:
+        if job.skills:
+            parts = [s.strip().lower() for s in job.skills.split(",") if s.strip()]
+            recruiter_skills.update(parts)
+
+    candidate_list = list(profiles.prefetch_related("skills"))
+    for profile in candidate_list:
+        candidate_skills = {s.name.strip().lower() for s in profile.skills.all()}
+        profile.is_recommended = bool(candidate_skills & recruiter_skills)
 
     return render(request, 'accounts/candidate_list.html', {
         'candidates': candidate_list,
