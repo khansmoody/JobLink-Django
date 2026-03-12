@@ -3,6 +3,10 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from .models import Job, JobApplication
 import math
+from accounts.models import JobSeekerProfile
+from functools import reduce
+from operator import add
+from django.db.models import Case, When, Value, IntegerField
 
 
 # Phuong added state abbreviation for full name so "GA" and "Georgia" match the same jobs
@@ -112,6 +116,25 @@ def job_list(request):
         except ValueError:
             pass
 
+    #Adding a skills matching system to find recommended jobs
+    user_skills = []
+    if request.user.role == "job_seeker" and request.user.is_authenticated:
+        profile = JobSeekerProfile.objects.filter(user=request.user).first()
+        if profile:
+            user_skills = list(profile.skills.values_list("name", flat = True))
+    if user_skills:
+        score = [ 
+            Case(
+                When(skills__icontains=skill, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
+            )
+            for skill in user_skills
+        ]
+        jobs = jobs.annotate(skill_match_score=reduce(add, score, Value(0)))
+        jobs = jobs.order_by("-skill_match_score", "-created_at")
+    else:
+        jobs = jobs.order_by("-created_at")
     # passes selected_work_types so template can re-check the right boxes after filtering
     return render(request, 'jobs/jobs_list.html', {
         'jobs': jobs,
@@ -229,4 +252,30 @@ def kanban(request):
         "offer":     application.filter(status="offer"),
         "closed":    application.filter(status="closed"),
     }
-    return render(request, "jobs/kanban.html", {"grouped": grouped})
+
+    return render(request, "jobs/kanban.html", {
+        "grouped": grouped,
+        "status_choices": JobApplication.STATUS_CHOICES,
+    })
+
+#Views function that allow recruiter to update statuses for the Kanban board 
+@login_required
+def job_status(request, application_id):
+    if request.user.role != "recruiter":
+        return redirect("jobs:job_list")
+    if request.method != "POST":
+        return redirect("jobs:kanban")
+
+    application = get_object_or_404(
+        JobApplication.objects.select_related("job"),
+        id=application_id,
+        job__recruiter = request.user,
+        )
+
+    new_status = (request.POST.get("status") or "").strip()
+    valid = {k for k, _ in JobApplication.STATUS_CHOICES}
+    if new_status in valid: 
+        application.status = new_status
+        application.save(update_fields=["status"])
+
+    return redirect("jobs:kanban")

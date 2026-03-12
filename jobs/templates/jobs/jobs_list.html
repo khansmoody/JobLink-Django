@@ -163,6 +163,12 @@
                                 {% if job.visa_sponsorship %}
                                     <span class="badge" style="background:#E3F2FD;color:#1565C0;">✈️ Visa Sponsored</span>
                                 {% endif %}
+                                {% if user.is_authenticated and user.role == 'job_seeker' %}
+                                {% if job.skill_match_score|default:0 > 0 %}
+                                <span class="badge bg-primary">Recommended</span>
+                                <span class="badge bg-light text-dark border">Skill Match: {{ job.skill_match_score }}</span>
+                                {% endif %}
+                            {% endif %}
                                 <!-- US#20 (partner) — flagged badge -->
                                 {% if job.is_flagged and user == job.recruiter %}
                                     <span class="badge bg-danger">⚠️ Flagged by Admin</span>
