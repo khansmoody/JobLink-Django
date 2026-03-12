@@ -32,16 +32,23 @@
                     <!-- US#7 — distance/radius filter with 📍 button -->
                     <div class="mb-3">
                         <label class="form-label">Distance from me</label>
+                        <!-- User Story #9: Show user's preferred radius from settings -->
+                         {% if default_radius %}
+                         <small class="text-muted d-block mb-1">
+                            <i class="fas fa-star me-1" style="color:#EAAA00;"></i>Your default: {{ default_radius }} miles
+                        </small>
+                        {% endif %}
                         <div class="input-group mb-2">
                             <select name="radius" class="form-select">
                                 <option value="">Any</option>
-                                <option value="5"   {% if request.GET.radius == '5'   %}selected{% endif %}>5 mi</option>
-                                <option value="10"  {% if request.GET.radius == '10'  %}selected{% endif %}>10 mi</option>
-                                <option value="15"  {% if request.GET.radius == '15'  %}selected{% endif %}>15 mi</option>
-                                <option value="25"  {% if request.GET.radius == '25'  %}selected{% endif %}>25 mi</option>
-                                <option value="50"  {% if request.GET.radius == '50'  %}selected{% endif %}>50 mi</option>
-                                <option value="75"  {% if request.GET.radius == '75'  %}selected{% endif %}>75 mi</option>
-                                <option value="100" {% if request.GET.radius == '100' %}selected{% endif %}>100 mi</option>
+                                <!-- User Story #9: Pre-select user's preferred radius if no filter applied -->
+                                <option value="5" {% if request.GET.radius == '5' %}selected{% elif not request.GET.radius and default_radius == 5 %}selected{% endif %}>5 mi</option>
+                                <option value="10" {% if request.GET.radius == '10' %}selected{% elif not request.GET.radius and default_radius == 10 %}selected{% endif %}>10 mi</option>
+                                <option value="15" {% if request.GET.radius == '15' %}selected{% elif not request.GET.radius and default_radius == 15 %}selected{% endif %}>15 mi</option>
+                                <option value="25" {% if request.GET.radius == '25' %}selected{% elif not request.GET.radius and default_radius == 25 %}selected{% endif %}>25 mi</option>
+                                <option value="50" {% if request.GET.radius == '50' %}selected{% elif not request.GET.radius and default_radius == 50 %}selected{% endif %}>50 mi</option>
+                                <option value="75" {% if request.GET.radius == '75' %}selected{% elif not request.GET.radius and default_radius == 75 %}selected{% endif %}>75 mi</option>
+                                <option value="100" {% if request.GET.radius == '100' %}selected{% elif not request.GET.radius and default_radius == 100 %}selected{% endif %}>100 mi</option>
                             </select>
                             <button type="button" class="btn btn-outline-secondary" onclick="getLocation()" title="Use my location">
                                 Use My Location 📍

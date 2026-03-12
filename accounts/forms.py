@@ -250,6 +250,7 @@ class PrivacySettingsForm(BootstrapErrorMixin, forms.ModelForm):
             'hide_profile_photo',
             'recruiter_contact_permission',
             'message_filtering',
+            'preferred_commute_radius',  # User Story #9
         ]
         widgets = {
             'hide_email': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
@@ -259,6 +260,7 @@ class PrivacySettingsForm(BootstrapErrorMixin, forms.ModelForm):
             'profile_visibility': forms.Select(attrs={'class': 'form-select'}),
             'recruiter_contact_permission': forms.Select(attrs={'class': 'form-select'}),
             'message_filtering': forms.Select(attrs={'class': 'form-select'}),
+            'preferred_commute_radius': forms.Select(attrs={'class': 'form-select'}),  # User Story #9
         }
         labels = {
             'hide_email': 'Hide email address from recruiters',
@@ -268,6 +270,7 @@ class PrivacySettingsForm(BootstrapErrorMixin, forms.ModelForm):
             'hide_profile_photo': 'Hide profile picture from recruiters',
             'recruiter_contact_permission': 'Who can contact me',
             'message_filtering': 'Message filtering',
+            'preferred_commute_radius': 'Preferred job search radius',  # User Story #9
         }
     
     def __init__(self, *args, **kwargs):

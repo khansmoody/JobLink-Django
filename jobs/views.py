@@ -61,6 +61,16 @@ def job_list(request):
     elif request.user.role == 'recruiter':
         jobs = jobs.filter(Q(is_flagged=False) | Q(recruiter=request.user))
 
+    
+    # User Story #9: Get user's preferred commute radius as default
+    default_radius = None
+    if request.user.is_authenticated and request.user.role == 'job_seeker':
+        try:
+            profile = request.user.profile
+            default_radius = profile.preferred_commute_radius
+        except:
+            default_radius = 25  # Fallback default
+
     # keyword filter: title or skills
     title_query = request.GET.get('title', '').strip()
     if title_query:
@@ -136,9 +146,11 @@ def job_list(request):
     else:
         jobs = jobs.order_by("-created_at")
     # passes selected_work_types so template can re-check the right boxes after filtering
+    # User Story #9: Pass default radius to template
     return render(request, 'jobs/jobs_list.html', {
         'jobs': jobs,
         'selected_work_types': work_types,
+        'default_radius': default_radius,  # User Story #9
     })
 
 

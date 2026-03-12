@@ -99,6 +99,21 @@ class JobSeekerProfile(models.Model):
     def display_name(self):
         full = f"{self.user.first_name} {self.user.last_name}".strip()
         return full if full else self.user.username
+    
+     # User Story #9: Preferred commute radius
+    preferred_commute_radius = models.IntegerField(
+        default=25,
+        choices=[
+            (5, '5 miles'),
+            (10, '10 miles'),
+            (15, '15 miles'),
+            (25, '25 miles'),
+            (50, '50 miles'),
+            (75, '75 miles'),
+            (100, '100 miles'),
+        ],
+        help_text="Default distance filter for job searches"
+    )
 
     def __str__(self):
         return f"Profile({self.display_name()})"
