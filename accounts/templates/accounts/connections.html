@@ -101,11 +101,14 @@
                       </h6>
                       <small class="text-muted d-block mb-2">@{{ item.user.username }}</small>
                       <p class="small mb-3">{{ item.profile.headline|truncatewords:8 }}</p>
-                      
-                      <div class="d-flex gap-2 justify-content-center">
+                      <div class="d-flex gap-2 justify-content-center flex-wrap">
                         <a href="{% url 'accounts.profile_user' username=item.user.username %}" 
                            class="btn btn-sm text-white" style="background:#003057;">
                           <i class="fas fa-eye me-1"></i>View
+                        </a>
+                        <a href="{% url 'messaging:start_with_user' item.user.id %}"
+                           class="btn btn-sm" style="background:#003057;color:white;font-weight:600;">
+                          <i class="fas fa-comment me-1"></i>Message
                         </a>
                         <a href="{% url 'accounts.remove_connection' username=item.user.username %}" 
                            class="btn btn-sm btn-outline-danger"

@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2 class="mb-0" style="color:#003057;">
+                <i class="fas fa-map-marked-alt me-2" style="color:#EAAA00;"></i>Applicant Distribution Map
+            </h2>
+            <p class="text-muted mb-0 small">See where candidates are located. Clusters expand when you zoom in.</p>
+        </div>
+        <a href="{% url 'candidate_search' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-list me-1"></i>Back to Candidate List
+        </a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center h-100">
+                <div class="card-body py-3">
+                    <div style="font-size:2rem; color:#EAAA00;"><i class="fas fa-users"></i></div>
+                    <h4 class="mb-0 mt-1">{{ total_candidates }}</h4>
+                    <p class="text-muted small mb-0">Total Public Profiles</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center h-100">
+                <div class="card-body py-3">
+                    <div style="font-size:2rem; color:#EAAA00;"><i class="fas fa-map-pin"></i></div>
+                    <h4 class="mb-0 mt-1" id="geocoded-count">—</h4>
+                    <p class="text-muted small mb-0">Locations Mapped</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body py-3">
+                    <p class="fw-semibold mb-2" style="color:#003057;">
+                        <i class="fas fa-trophy me-1" style="color:#EAAA00;"></i>Top Candidate Locations
+                    </p>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for loc in top_locations %}
+                            <span class="badge rounded-pill" style="background:#003057; font-size:0.8rem; padding:6px 12px;">
+                                {{ loc.location }}
+                                <span class="ms-1 px-1 rounded" style="background:#EAAA00; color:#003057;">{{ loc.count }}</span>
+                            </span>
+                        {% empty %}
+                            <span class="text-muted small">No location data available.</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="geocode-notice" class="alert alert-info py-2 small mb-2">
+        <i class="fas fa-spinner fa-spin me-2"></i>Geocoding candidate locations… This may take a moment.
+    </div>
+
+    <div id="map" style="height:520px; width:100%; border-radius:10px; border:1px solid #ddd; z-index:1; margin-bottom:24px;"></div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body py-2 px-3 d-flex flex-wrap align-items-center gap-4">
+            <span class="fw-semibold small" style="color:#003057;">Legend:</span>
+            <span class="d-flex align-items-center gap-1 small">
+                <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#003057;border:2px solid #EAAA00;"></span>
+                Single candidate
+            </span>
+            <span class="d-flex align-items-center gap-1 small">
+                <span style="display:inline-block;width:28px;height:28px;border-radius:50%;background:#EAAA00;border:2px solid #003057;text-align:center;line-height:24px;font-weight:bold;color:#003057;">N</span>
+                Cluster — click to zoom in
+            </span>
+        </div>
+    </div>
+</div>
+<script id="location-data" type="application/json">
+    {{ location_counts_json|safe }}
+</script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+<script>
+var map = L.map('map').setView([39.5, -98.35], 4);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles &copy; Esri'
+}).addTo(map);
+
+var clusterGroup = L.markerClusterGroup({
+    maxClusterRadius: 60,
+    iconCreateFunction: function(cluster) {
+        var count = cluster.getChildCount();
+        var size  = count < 10 ? 36 : count < 50 ? 44 : 54;
+        return L.divIcon({
+            html: '<div style="background:#EAAA00;color:#003057;border-radius:50%;width:' + size + 'px;height:' + size + 'px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:' + (size < 44 ? 13 : 15) + 'px;border:3px solid #003057;box-shadow:0 2px 6px rgba(0,0,0,0.25);">' + count + '</div>',
+            className: '',
+            iconSize: [size, size],
+            iconAnchor: [size/2, size/2],
+        });
+    }
+});
+
+var singleIcon = L.divIcon({
+    html: '<div style="background:#003057;width:14px;height:14px;border-radius:50%;border:3px solid #EAAA00;box-shadow:0 1px 4px rgba(0,0,0,0.3);"></div>',
+    className: '',
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
+});
+
+var locationData = JSON.parse(document.getElementById('location-data').textContent);
+var geocoded = 0;
+var failed   = 0;
+var total    = locationData.length;
+
+function updateCounter() {
+    document.getElementById('geocoded-count').textContent = geocoded;
+}
+
+function geocodeNext(index) {
+    if (index >= total) {
+        map.addLayer(clusterGroup);
+        var notice = document.getElementById('geocode-notice');
+        if (geocoded === 0) {
+            notice.className = 'alert alert-warning py-2 small mb-2';
+            notice.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Could not geocode any locations.';
+        } else {
+            notice.className = 'alert alert-success py-2 small mb-2';
+            notice.innerHTML = '<i class="fas fa-check-circle me-2"></i>' + geocoded + ' location' + (geocoded !== 1 ? 's' : '') + ' mapped' + (failed ? ' (' + failed + ' could not be geocoded)' : '') + '.';
+        }
+        return;
+    }
+
+    var entry  = locationData[index];
+    var locStr = entry.location;
+    var count  = entry.count;
+    var url    = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(locStr);
+
+    fetch(url, { headers: { 'Accept-Language': 'en' } })
+        .then(function(r) { return r.json(); })
+        .then(function(results) {
+            if (results && results.length > 0) {
+                var lat = parseFloat(results[0].lat);
+                var lng = parseFloat(results[0].lon);
+                for (var i = 0; i < count; i++) {
+                    var jitterLat = lat + (Math.random() - 0.5) * 0.04;
+                    var jitterLng = lng + (Math.random() - 0.5) * 0.04;
+                    var marker = L.marker([jitterLat, jitterLng], { icon: singleIcon });
+                    marker.bindPopup(
+                        '<div style="min-width:140px;text-align:center;">'
+                        + '<strong style="color:#003057;">' + locStr + '</strong><br>'
+                        + '<span style="color:#EAAA00;font-weight:bold;font-size:1.1em;">' + count + '</span>'
+                        + ' candidate' + (count !== 1 ? 's' : '')
+                        + '<br><a href="/accounts/candidates/?location=' + encodeURIComponent(locStr) + '" style="color:#003057;font-size:0.85em;">Search these candidates &rarr;</a>'
+                        + '</div>'
+                    );
+                    clusterGroup.addLayer(marker);
+                }
+                geocoded++;
+                updateCounter();
+            } else {
+                failed++;
+            }
+        })
+        .catch(function() { failed++; })
+        .finally(function() {
+            setTimeout(function() { geocodeNext(index + 1); }, 1100);
+        });
+}
+
+if (total > 0) {
+    geocodeNext(0);
+} else {
+    map.addLayer(clusterGroup);
+    var notice = document.getElementById('geocode-notice');
+    notice.className = 'alert alert-warning py-2 small mb-2';
+    notice.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>No candidate locations found.';
+}
+</script>
+
+{% endblock %}

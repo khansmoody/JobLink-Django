@@ -1,10 +1,15 @@
 {% extends 'base.html' %}
-
+{% block title %}Search Candidates{% endblock %}
 {% block content %}
 <div class="container mt-4">
     <div class="row">
         <div class="col-12">
-            <h2>Find Candidates</h2>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2>Find Candidates</h2>
+                <a href="{% url 'applicant_cluster_map' %}" class="btn btn-sm text-white" style="background:#003057;">
+                    <i class="fas fa-map-marked-alt me-1"></i>View Applicant Map
+                </a>
+            </div>
             <form method="GET" action="{% url 'candidate_search' %}" class="row g-3 mb-3">
                 <div class="col-md-3">
                     <input type="text" name="skill" class="form-control" placeholder="Skills (e.g., Python)" value="{{ current_skill }}">
