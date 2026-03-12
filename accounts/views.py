@@ -25,6 +25,7 @@ from .forms import (
     AccountSettingsForm,
     EmailCandidateForm,
 )
+import json
 
 # Logout
 @login_required
@@ -478,6 +479,41 @@ def delete_saved_search(request, search_id):
     saved_search = get_object_or_404(SavedSearch, id=search_id, recruiter=request.user)
     saved_search.delete()
     return redirect('candidate_search')
+
+# User Story #18: Applicant Cluster Map for Recruiters
+@login_required
+def applicant_cluster_map(request):
+    if request.user.role != 'recruiter':
+        messages.error(request, "Only recruiters can view the applicant map.")
+        return redirect('home.index')
+
+    from jobs.models import JobApplication
+    from django.db.models import Count
+
+    profiles_qs = (
+        JobSeekerProfile.objects
+        .filter(profile_visibility='public', user__role='job_seeker')
+        .exclude(location='')
+        .values('location')
+        .annotate(count=Count('id'))
+        .order_by('-count')
+    )
+
+    location_counts = list(profiles_qs)
+
+    total_candidates = JobSeekerProfile.objects.filter(
+        profile_visibility='public', user__role='job_seeker'
+    ).count()
+
+    top_locations = location_counts[:5]
+
+    context = {
+        'location_counts_json': json.dumps(location_counts),
+        'total_candidates': total_candidates,
+        'top_locations': top_locations,
+        'title': 'Applicant Distribution Map',
+    }
+    return render(request, 'accounts/applicant_map.html', context)
 
 # User Story #14: Email Candidate View
 @login_required
