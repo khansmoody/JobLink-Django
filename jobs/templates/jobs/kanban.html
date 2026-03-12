@@ -3,125 +3,135 @@
 {% block title %}Application Pipeline{% endblock %}
 {% block content %}
 <div class="container mt-4">
-  <h2 class="mb-3">Kanban Board</h2>
+  <h2 class="mb-3" style="color:var(--navy);">Manage & Organize Your Applicants</h2>
 
   <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-5 g-3">
     <div class="col">
-      <div class="kanban-column p-3 h-100">
-        <h6>Applied</h6>
+      <div class="p-3 h-100 rounded" style="background:var(--gray-light);border:1px solid var(--gray-mid);">
+        <h6 style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--navy);border-bottom:2px solid var(--gold);padding-bottom:0.4rem;margin-bottom:0.75rem;">Applied</h6>
         {% for app in grouped.applied %}
-          <div class="card mb-2 p-2">
-            <strong>{{ app.user.username }}</strong>
-            <small class="text-muted fw-bold">{{ app.job.company_name }}</small>
-            <small>{{ app.job.title }}</small>
-            <form method="post" action="{% url 'jobs:update_application_status' app.id %}" class="mt-2">
-              {% csrf_token %}
-              <select name="status" class="form-select form-select-sm mb-2">
-                {% for key, label in status_choices %}
-                  <option value="{{ key }}" {% if app.status == key %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-              </select>
-              <button type="submit" class="btn btn-sm btn-outline-primary w-100">Update</button>
-            </form>
+          <div class="card mb-2" style="border-left:3px solid var(--gold);">
+            <div class="card-body p-2">
+              <strong style="font-size:0.875rem;color:var(--navy);">{{ app.user.username }}</strong>
+              <small class="d-block text-muted fw-bold">{{ app.job.company_name }}</small>
+              <small class="d-block text-muted">{{ app.job.title }}</small>
+              <form method="post" action="{% url 'jobs:update_application_status' app.id %}" class="mt-2">
+                {% csrf_token %}
+                <select name="status" class="form-select form-select-sm mb-2">
+                  {% for key, label in status_choices %}
+                    <option value="{{ key }}" {% if app.status == key %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-sm btn-primary w-100">Update</button>
+              </form>
+            </div>
           </div>
         {% empty %}
-          <p class="text-muted">None</p>
+          <p class="text-muted" style="font-size:0.8rem;">None</p>
         {% endfor %}
       </div>
     </div>
 
     <div class="col">
-      <div class="kanban-column p-3 h-100">
-        <h6>Review</h6>
+      <div class="p-3 h-100 rounded" style="background:var(--gray-light);border:1px solid var(--gray-mid);">
+        <h6 style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--navy);border-bottom:2px solid var(--gold);padding-bottom:0.4rem;margin-bottom:0.75rem;">Review</h6>
         {% for app in grouped.review %}
-          <div class="card mb-2 p-2">
-            <strong>{{ app.user.username }}</strong>
-            <small class="text-muted fw-bold">{{ app.job.company_name }}</small>
-            <small>{{ app.job.title }}</small>
-            <form method="post" action="{% url 'jobs:update_application_status' app.id %}" class="mt-2">
-              {% csrf_token %}
-              <select name="status" class="form-select form-select-sm mb-2">
-                {% for key, label in status_choices %}
-                  <option value="{{ key }}" {% if app.status == key %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-              </select>
-              <button type="submit" class="btn btn-sm btn-outline-primary w-100">Update</button>
-            </form>
+          <div class="card mb-2" style="border-left:3px solid var(--gold);">
+            <div class="card-body p-2">
+              <strong style="font-size:0.875rem;color:var(--navy);">{{ app.user.username }}</strong>
+              <small class="d-block text-muted fw-bold">{{ app.job.company_name }}</small>
+              <small class="d-block text-muted">{{ app.job.title }}</small>
+              <form method="post" action="{% url 'jobs:update_application_status' app.id %}" class="mt-2">
+                {% csrf_token %}
+                <select name="status" class="form-select form-select-sm mb-2">
+                  {% for key, label in status_choices %}
+                    <option value="{{ key }}" {% if app.status == key %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-sm btn-primary w-100">Update</button>
+              </form>
+            </div>
           </div>
         {% empty %}
-          <p class="text-muted">None</p>
+          <p class="text-muted" style="font-size:0.8rem;">None</p>
         {% endfor %}
       </div>
     </div>
 
     <div class="col">
-      <div class="kanban-column p-3 h-100">
-        <h6>Interview</h6>
+      <div class="p-3 h-100 rounded" style="background:var(--gray-light);border:1px solid var(--gray-mid);">
+        <h6 style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--navy);border-bottom:2px solid var(--gold);padding-bottom:0.4rem;margin-bottom:0.75rem;">Interview</h6>
         {% for app in grouped.interview %}
-          <div class="card mb-2 p-2">
-            <strong>{{ app.user.username }}</strong>
-            <small class="text-muted fw-bold">{{ app.job.company_name }}</small>
-            <small>{{ app.job.title }}</small>
-            <form method="post" action="{% url 'jobs:update_application_status' app.id %}" class="mt-2">
-              {% csrf_token %}
-              <select name="status" class="form-select form-select-sm mb-2">
-                {% for key, label in status_choices %}
-                  <option value="{{ key }}" {% if app.status == key %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-              </select>
-              <button type="submit" class="btn btn-sm btn-outline-primary w-100">Update</button>
-            </form>
+          <div class="card mb-2" style="border-left:3px solid var(--gold);">
+            <div class="card-body p-2">
+              <strong style="font-size:0.875rem;color:var(--navy);">{{ app.user.username }}</strong>
+              <small class="d-block text-muted fw-bold">{{ app.job.company_name }}</small>
+              <small class="d-block text-muted">{{ app.job.title }}</small>
+              <form method="post" action="{% url 'jobs:update_application_status' app.id %}" class="mt-2">
+                {% csrf_token %}
+                <select name="status" class="form-select form-select-sm mb-2">
+                  {% for key, label in status_choices %}
+                    <option value="{{ key }}" {% if app.status == key %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-sm btn-primary w-100">Update</button>
+              </form>
+            </div>
           </div>
         {% empty %}
-          <p class="text-muted">None</p>
+          <p class="text-muted" style="font-size:0.8rem;">None</p>
         {% endfor %}
       </div>
     </div>
 
     <div class="col">
-      <div class="kanban-column p-3 h-100">
-        <h6>Offer</h6>
+      <div class="p-3 h-100 rounded" style="background:var(--gray-light);border:1px solid var(--gray-mid);">
+        <h6 style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--navy);border-bottom:2px solid var(--gold);padding-bottom:0.4rem;margin-bottom:0.75rem;">Offer</h6>
         {% for app in grouped.offer %}
-          <div class="card mb-2 p-2">
-            <strong>{{ app.user.username }}</strong>
-            <small class="text-muted fw-bold">{{ app.job.company_name }}</small>
-            <small>{{ app.job.title }}</small>
-            <form method="post" action="{% url 'jobs:update_application_status' app.id %}" class="mt-2">
-              {% csrf_token %}
-              <select name="status" class="form-select form-select-sm mb-2">
-                {% for key, label in status_choices %}
-                  <option value="{{ key }}" {% if app.status == key %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-              </select>
-              <button type="submit" class="btn btn-sm btn-outline-primary w-100">Update</button>
-            </form>
+          <div class="card mb-2" style="border-left:3px solid var(--gold);">
+            <div class="card-body p-2">
+              <strong style="font-size:0.875rem;color:var(--navy);">{{ app.user.username }}</strong>
+              <small class="d-block text-muted fw-bold">{{ app.job.company_name }}</small>
+              <small class="d-block text-muted">{{ app.job.title }}</small>
+              <form method="post" action="{% url 'jobs:update_application_status' app.id %}" class="mt-2">
+                {% csrf_token %}
+                <select name="status" class="form-select form-select-sm mb-2">
+                  {% for key, label in status_choices %}
+                    <option value="{{ key }}" {% if app.status == key %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-sm btn-primary w-100">Update</button>
+              </form>
+            </div>
           </div>
         {% empty %}
-          <p class="text-muted">None</p>
+          <p class="text-muted" style="font-size:0.8rem;">None</p>
         {% endfor %}
       </div>
     </div>
 
     <div class="col">
-      <div class="kanban-column p-3 h-100">
-        <h6>Closed</h6>
+      <div class="p-3 h-100 rounded" style="background:var(--gray-light);border:1px solid var(--gray-mid);">
+        <h6 style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--navy);border-bottom:2px solid var(--gold);padding-bottom:0.4rem;margin-bottom:0.75rem;">Closed</h6>
         {% for app in grouped.closed %}
-          <div class="card mb-2 p-2">
-            <strong>{{ app.user.username }}</strong>
-            <small class="text-muted fw-bold">{{ app.job.company_name }}</small>
-            <small>{{ app.job.title }}</small>
-            <form method="post" action="{% url 'jobs:update_application_status' app.id %}" class="mt-2">
-              {% csrf_token %}
-              <select name="status" class="form-select form-select-sm mb-2">
-                {% for key, label in status_choices %}
-                  <option value="{{ key }}" {% if app.status == key %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-              </select>
-              <button type="submit" class="btn btn-sm btn-outline-primary w-100">Update</button>
-            </form>
+          <div class="card mb-2" style="border-left:3px solid var(--gold);">
+            <div class="card-body p-2">
+              <strong style="font-size:0.875rem;color:var(--navy);">{{ app.user.username }}</strong>
+              <small class="d-block text-muted fw-bold">{{ app.job.company_name }}</small>
+              <small class="d-block text-muted">{{ app.job.title }}</small>
+              <form method="post" action="{% url 'jobs:update_application_status' app.id %}" class="mt-2">
+                {% csrf_token %}
+                <select name="status" class="form-select form-select-sm mb-2">
+                  {% for key, label in status_choices %}
+                    <option value="{{ key }}" {% if app.status == key %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-sm btn-primary w-100">Update</button>
+              </form>
+            </div>
           </div>
         {% empty %}
-          <p class="text-muted">None</p>
+          <p class="text-muted" style="font-size:0.8rem;">None</p>
         {% endfor %}
       </div>
     </div>

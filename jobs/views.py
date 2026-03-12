@@ -104,15 +104,15 @@ def job_list(request):
             user_lat_f = float(user_lat)
             user_lon_f = float(user_lon)
             radius_f   = float(radius)
-            filtered = []
+            filtered_ids = []
             for job in jobs:
                 if job.latitude is not None and job.longitude is not None:
                     dist = calculate_distance(
                         user_lat_f, user_lon_f, job.latitude, job.longitude
                     )
                     if dist <= radius_f:
-                        filtered.append(job)
-            jobs = filtered
+                        filtered_ids.append(job.pk)
+            jobs = jobs.filter(pk__in=filtered_ids)
         except ValueError:
             pass
 

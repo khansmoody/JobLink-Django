@@ -152,11 +152,11 @@
                             <!-- work type + visa badges -->
                             <div class="d-flex flex-wrap gap-1 mb-2 mt-1">
                                 {% if job.work_type == 'onsite' %}
-                                    <span class="badge badge-navy">On-site</span>
+                                    <span class="badge" style="background:#000000;color:#fff;">On-site</span>
                                 {% elif job.work_type == 'remote' %}
-                                    <span class="badge badge-remote">Remote</span>
+                                    <span class="badge" style="background:#1976D2;color:#fff;">Remote</span>
                                 {% elif job.work_type == 'hybrid' %}
-                                    <span class="badge badge-gold">Hybrid</span>
+                                    <span class="badge" style="background:#2E7D32;color:#fff;">Hybrid</span>
                                 {% else %}
                                     <span class="badge" style="background:var(--gray-light);color:var(--gray-text);border:1px solid var(--gray-mid);">{{ job.work_type }}</span>
                                 {% endif %}
@@ -165,7 +165,7 @@
                                 {% endif %}
                                 {% if user.is_authenticated and user.role == 'job_seeker' %}
                                 {% if job.skill_match_score|default:0 > 0 %}
-                                <span class="badge bg-primary">Recommended</span>
+                                <span class="badge" style="background:#519eb3;color:#fff;">Recommended</span>
                                 <span class="badge bg-light text-dark border">Skill Match: {{ job.skill_match_score }}</span>
                                 {% endif %}
                             {% endif %}
@@ -174,6 +174,15 @@
                                     <span class="badge bg-danger">⚠️ Flagged by Admin</span>
                                 {% endif %}
                             </div>
+
+                            <!-- skills badges — visible to all users -->
+                            {% if job.skills_list %}
+                            <div class="d-flex flex-wrap gap-1 mb-2">
+                                {% for skill in job.skills_list %}
+                                <span class="badge" style="background:#EAAA00;color:#ffffff;font-weight:500;font-size:0.72rem;">{{ skill }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
 
                             <p class="card-text">{{ job.description }}</p>
 

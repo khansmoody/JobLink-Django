@@ -22,7 +22,7 @@
   *, *::before, *::after { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Roboto', sans-serif;
     font-size: 0.9375rem;
     background-color: var(--off-white);
     color: #1a1a1a;
@@ -59,7 +59,7 @@
   }
   /* Styling for buttons */
   .btn {
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Robotos', sans-serif;
     font-weight: 500;
     font-size: 0.875rem;
     border-radius: var(--radius-sm);
@@ -107,7 +107,7 @@
   }
   .btn-sm { padding: 0.3rem 0.75rem; font-size: 0.8125rem; }
   .form-control, .form-select {
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Roboto', sans-serif;
     font-size: 0.875rem;
     border: 1.5px solid var(--gray-mid);
     border-radius: var(--radius-sm);
@@ -166,7 +166,7 @@
     font-size: 0.9rem;
   }
   .badge {
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Roboto', sans-serif;
     font-size: 0.75rem;
     font-weight: 500;
     padding: 0.3em 0.65em;
@@ -175,7 +175,6 @@
   }
   .badge-navy   { background-color: var(--navy) !important; color: var(--white) !important; }
   .badge-gold   { background-color: var(--gold) !important; color: var(--navy) !important; }
-  .badge-remote { background-color: #e8f5e9 !important; color: var(--success) !important; border: 1px solid #c8e6c9 !important; }
   /* Filter pill tags */
   .filter-pill {
     background: #EDF1F7;

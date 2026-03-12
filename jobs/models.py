@@ -36,6 +36,13 @@ class Job(models.Model):
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
 
+    @property
+    def skills_list(self):
+        """Returns skills as a cleaned list for template iteration."""
+        if not self.skills:
+            return []
+        return [s.strip() for s in self.skills.split(",") if s.strip()]
+
     def __str__(self):
         return f"{self.title} at {self.company_name}"
 
